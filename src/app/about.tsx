@@ -52,7 +52,7 @@ const AboutScreen = () => {
         <View className="items-center mb-8">
           <View className="size-20 rounded-2xl bg-primary/15 items-center justify-center mb-4">
             <Image
-              source={require("@/../assets/icon.png")}
+              source={require("@/../assets/images/icon.png")}
               className="w-full h-full rounded-2xl"
               resizeMode="contain"
             />
