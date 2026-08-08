@@ -37,7 +37,13 @@ export async function processQueue() {
         extracted.author?.replace(/[^a-z0-9]/gi, "_") || "unknown";
       const filename = `${extracted.platform}-${safeAuthor}-${timestamp}.mp4`;
 
-      await downloadAndSave(nextJob.id, extracted.videoUrl, filename);
+      await downloadAndSave(
+        nextJob.id,
+        extracted.videoUrl,
+        filename,
+        extracted.platform,
+        extracted.cookies,
+      );
 
       // Successfully completed, process next
     } catch (error) {

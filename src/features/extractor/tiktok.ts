@@ -1,6 +1,32 @@
 import type { ExtractResult } from "@/features/extractor/types";
 import { MOBILE_UA } from "@/lib/constants";
 
+// TikTok signs the video CDN URL against the session cookies it sets when
+// serving the page (chiefly tt_chain_token). The downloader must replay them
+// or the CDN responds 403 Access Denied.
+const SESSION_COOKIES = [
+  "tt_chain_token",
+  "ttwid",
+  "msToken",
+  "tt_csrf_token",
+  "s_v_web_id",
+];
+
+function extractSessionCookies(response: Response): string {
+  const raw =
+    response.headers.get("set-cookie") ??
+    response.headers.get("Set-Cookie") ??
+    "";
+  if (!raw) return "";
+
+  const found: string[] = [];
+  for (const name of SESSION_COOKIES) {
+    const match = raw.match(new RegExp(`(?:^|[;,])\\s*${name}=([^;,]+)`));
+    if (match?.[1]) found.push(`${name}=${match[1]}`);
+  }
+  return found.join("; ");
+}
+
 export async function extractTikTok(url: string): Promise<ExtractResult> {
   const response = await fetch(url, {
     headers: {
@@ -14,6 +40,8 @@ export async function extractTikTok(url: string): Promise<ExtractResult> {
   if (!response.ok) {
     throw new Error(`TikTok fetch failed with status: ${response.status}`);
   }
+
+  const cookies = extractSessionCookies(response);
 
   const html = await response.text();
 
@@ -68,6 +96,7 @@ export async function extractTikTok(url: string): Promise<ExtractResult> {
       coverUrl,
       author,
       caption,
+      cookies,
     };
   } catch (error) {
     if (error instanceof Error) {

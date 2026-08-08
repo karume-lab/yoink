@@ -32,7 +32,14 @@
       ],
       "expo-font",
       "expo-secure-store",
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow Yoink to save videos to your gallery.",
+          "savePhotosPermission": "Allow Yoink to save videos to your gallery."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

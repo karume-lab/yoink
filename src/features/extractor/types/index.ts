@@ -9,5 +9,6 @@ export interface ExtractResult {
   coverUrl?: string;
   author?: string;
   caption?: string;
+  cookies?: string;
   platform: Platform;
 }
