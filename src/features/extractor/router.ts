@@ -1,5 +1,4 @@
 import { extractInstagramPublic } from "@/features/extractor/instagram";
-import { extractInstagramStory } from "@/features/extractor/instagram-story";
 import { extractTikTok } from "@/features/extractor/tiktok";
 import type { ExtractResult, Platform } from "@/features/extractor/types";
 
@@ -65,7 +64,7 @@ export async function extractMedia(url: string): Promise<ExtractResult> {
     case "instagram-reel":
       return await extractInstagramPublic(finalUrl, platform);
     case "instagram-story":
-      return await extractInstagramStory(finalUrl);
+      throw new Error("Instagram stories are not supported.");
     default:
       throw new Error(`Platform ${platform} extractor not implemented yet.`);
   }

@@ -2,8 +2,8 @@ import { Tabs } from "expo-router";
 import {
   IconClock,
   IconDownload,
+  IconInfoCircle,
   IconLink,
-  IconSettings,
 } from "tabler-icons-react-native";
 import { Icon } from "@/components/ui/icon";
 import {
@@ -64,11 +64,11 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="settings"
+        name="about"
         options={{
-          title: "Settings",
+          title: "About",
           tabBarIcon: ({ color }) => (
-            <Icon as={IconSettings} color={color as string} />
+            <Icon as={IconInfoCircle} color={color as string} />
           ),
         }}
       />
