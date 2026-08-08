@@ -120,6 +120,10 @@ export default function RootLayout() {
             <Stack.Screen name="index" options={{ headerShown: false }} />
           </Stack.Protected>
           <Stack.Screen
+            name="handle-share"
+            options={{ headerShown: false, animation: "none" }}
+          />
+          <Stack.Screen
             name="about"
             options={{ headerShown: false, presentation: "modal" }}
           />

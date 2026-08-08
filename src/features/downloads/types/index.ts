@@ -17,4 +17,6 @@ export interface DownloadJob {
   status: DownloadStatus;
   progress: number; // 0 to 1
   error?: string;
+  /** When true, progress/completion notifications are posted for this job. */
+  notify?: boolean;
 }

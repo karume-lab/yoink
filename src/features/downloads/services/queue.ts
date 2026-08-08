@@ -3,7 +3,17 @@ import { downloadAndSave } from "@/features/downloads/services/downloader";
 import type { DownloadJob } from "@/features/downloads/types";
 import { extractMedia } from "@/features/extractor/router";
 import { insertDownload } from "@/features/history/services/queries";
+import {
+  showDownloadComplete,
+  showDownloadFailed,
+  showDownloadProgress,
+} from "@/services/Notifications";
 import { useDownloadStore } from "@/stores/downloadStore";
+
+function jobLabel(job: DownloadJob): string {
+  if (job.author) return `${job.author} (${job.platform})`;
+  return "Your video";
+}
 
 let isProcessing = false;
 
@@ -26,6 +36,10 @@ export async function processQueue() {
     try {
       store.updateJob(nextJob.id, { status: "extracting", progress: 0 });
 
+      if (nextJob.notify) {
+        void showDownloadProgress(nextJob.id, "Preparing", 0);
+      }
+
       const extracted = await extractMedia(nextJob.sourceUrl);
 
       store.updateJob(nextJob.id, {
@@ -44,7 +58,19 @@ export async function processQueue() {
         filename,
         extracted.platform,
         extracted.cookies,
+        nextJob.notify
+          ? (progress) => {
+              showDownloadProgress(nextJob.id, "Downloading video", progress);
+            }
+          : undefined,
       );
+
+      if (nextJob.notify) {
+        void showDownloadComplete(
+          nextJob.id,
+          jobLabel({ ...nextJob, ...extracted }),
+        );
+      }
 
       // Persist to download history so it shows up in the History tab.
       try {
@@ -66,6 +92,9 @@ export async function processQueue() {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
       store.updateJob(nextJob.id, { status: "error", error: errorMessage });
+      if (nextJob.notify) {
+        void showDownloadFailed(nextJob.id, errorMessage);
+      }
     }
 
     isProcessing = false;
@@ -76,7 +105,7 @@ export async function processQueue() {
   }
 }
 
-export function enqueueDownload(url: string) {
+export function enqueueDownload(url: string, options?: { notify?: boolean }) {
   const id = nanoid();
 
   const job: DownloadJob = {
@@ -85,6 +114,7 @@ export function enqueueDownload(url: string) {
     sourceUrl: url,
     status: "queued",
     progress: 0,
+    notify: options?.notify,
   };
 
   useDownloadStore.getState().addJob(job);

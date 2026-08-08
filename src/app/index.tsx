@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Alert, View } from "react-native";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
+import { configureNotifications } from "@/services/Notifications";
 import { useOnboardingStore } from "@/stores/onboardingStore";
 
 export default function OnboardingScreen() {
@@ -12,6 +13,7 @@ export default function OnboardingScreen() {
     (state) => state.completeOnboarding,
   );
   const [permissionGranted, setPermissionGranted] = useState(false);
+  const [notificationsGranted, setNotificationsGranted] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const requestPermission = async () => {
@@ -28,6 +30,13 @@ export default function OnboardingScreen() {
       }
     } finally {
       setBusy(false);
+    }
+  };
+
+  const requestNotifications = async () => {
+    const granted = await configureNotifications();
+    if (granted) {
+      setNotificationsGranted(true);
     }
   };
 
@@ -66,6 +75,16 @@ export default function OnboardingScreen() {
       {!permissionGranted && (
         <Button variant="secondary" onPress={requestPermission} disabled={busy}>
           <Text>{busy ? "Requesting..." : "Allow gallery access"}</Text>
+        </Button>
+      )}
+
+      {permissionGranted && !notificationsGranted && (
+        <Button
+          variant="secondary"
+          onPress={requestNotifications}
+          className="mt-3"
+        >
+          <Text>Allow download notifications</Text>
         </Button>
       )}
 

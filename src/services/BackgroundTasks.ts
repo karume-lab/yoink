@@ -1,5 +1,6 @@
 import * as BackgroundTask from "expo-background-task";
 import * as TaskManager from "expo-task-manager";
+import { processQueue } from "@/features/downloads/services/queue";
 import { deleteYoinkAssets } from "@/features/downloads/services/yoinkAlbum";
 import {
   deleteDownloads,
@@ -8,6 +9,7 @@ import {
 import { useDownloadStore } from "@/stores/downloadStore";
 
 const YOINK_CLEANUP_TASK = "YOINK_CLEANUP";
+const YOINK_PROCESS_QUEUE_TASK = "YOINK_PROCESS_QUEUE";
 const RETENTION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 export async function runExpiredDownloadsCleanup(): Promise<void> {
@@ -50,6 +52,19 @@ TaskManager.defineTask(YOINK_CLEANUP_TASK, async () => {
   }
 });
 
+// Drives the download queue while the app is suspended, so a share handoff
+// that lands on a queued job keeps downloading without the user staying in
+// the app. Runs opportunistically — iOS schedules it, it isn't on-demand.
+TaskManager.defineTask(YOINK_PROCESS_QUEUE_TASK, async () => {
+  try {
+    await processQueue();
+    return BackgroundTask.BackgroundTaskResult.Success;
+  } catch (error) {
+    console.error("Background download task failed:", error);
+    return BackgroundTask.BackgroundTaskResult.Failed;
+  }
+});
+
 // Runs on launch / foreground so old files get purged even when the OS
 // doesn't fire the background task on schedule.
 export const runStartupCleanup = async () => {
@@ -58,14 +73,22 @@ export const runStartupCleanup = async () => {
 
 export const registerBackgroundTasks = async () => {
   try {
-    const alreadyRegistered =
+    const cleanupRegistered =
       await TaskManager.isTaskRegisteredAsync(YOINK_CLEANUP_TASK);
-    if (alreadyRegistered) {
-      return;
+    if (!cleanupRegistered) {
+      await BackgroundTask.registerTaskAsync(YOINK_CLEANUP_TASK, {
+        minimumInterval: 15, // minutes; the OS may run it less often
+      });
     }
-    await BackgroundTask.registerTaskAsync(YOINK_CLEANUP_TASK, {
-      minimumInterval: 15, // minutes; the OS may run it less often
-    });
+
+    const queueRegistered = await TaskManager.isTaskRegisteredAsync(
+      YOINK_PROCESS_QUEUE_TASK,
+    );
+    if (!queueRegistered) {
+      await BackgroundTask.registerTaskAsync(YOINK_PROCESS_QUEUE_TASK, {
+        minimumInterval: 15, // minutes; the OS may run it less often
+      });
+    }
   } catch (err) {
     console.log("Background task registration failed:", err);
   }

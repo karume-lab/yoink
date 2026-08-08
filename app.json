@@ -52,13 +52,13 @@
             }
           },
           "android": {
-            "enabled": true,
-            "singleShareMimeTypes": ["text/*"]
+            "enabled": false
           }
         }
       ],
       "expo-background-task",
-      "expo-task-manager"
+      "expo-task-manager",
+      "./plugins/withAndroidShareService.ts"
     ],
     "experiments": {
       "typedRoutes": true,
