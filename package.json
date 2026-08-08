@@ -76,6 +76,10 @@
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:migrate": "drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "build": "expo prebuild --clean && ./android/gradlew -p android assembleRelease",
+    "install-apk": "adb install ./android/app/build/outputs/apk/release/app-release.apk",
+    "update-apk": "adb install -r ./android/app/build/outputs/apk/release/app-release.apk",
+    "build:install-apk": "bun run build && bun run install-apk"
   }
 }
