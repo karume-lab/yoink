@@ -59,6 +59,10 @@ export default function RootLayout() {
       <ThemeProvider value={NAV_THEME}>
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="about"
+            options={{ headerShown: false, presentation: "modal" }}
+          />
         </Stack>
       </ThemeProvider>
       <PortalHost />

@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
 import { View } from "react-native";
@@ -75,6 +76,17 @@ export default function SettingsScreen() {
           />
           <Button variant="secondary" onPress={handleSaveCookie}>
             <Text>Save Cookie</Text>
+          </Button>
+        </Card>
+      </View>
+      <View className="gap-2">
+        <Text variant="title">About</Text>
+        <Card className="p-3 shadow-none">
+          <Button
+            variant="secondary"
+            onPress={() => router.push("/about" as never)}
+          >
+            <Text>About Yoink</Text>
           </Button>
         </Card>
       </View>
