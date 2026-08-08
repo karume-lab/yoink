@@ -1,12 +1,15 @@
 import { FlatList, TouchableOpacity, View } from "react-native";
 import { IconTrash } from "tabler-icons-react-native";
+import { useShallow } from "zustand/react/shallow";
 import { DownloadCard } from "@/components/core/DownloadCard";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 import { useDownloadStore } from "@/stores/downloadStore";
 
 export default function QueueScreen() {
-  const jobs = useDownloadStore((state) => Object.values(state.jobs));
+  const jobs = useDownloadStore(
+    useShallow((state) => Object.values(state.jobs)),
+  );
   const removeCompleted = useDownloadStore((state) => state.removeCompleted);
 
   // Sort: active/error first, completed last, then by ID (which is loosely time based if nanoid, but we could add timestamp)
