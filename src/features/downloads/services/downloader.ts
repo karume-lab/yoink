@@ -1,5 +1,9 @@
 import * as FileSystem from "expo-file-system/legacy";
-import { Asset, requestPermissionsAsync } from "expo-media-library";
+import { requestPermissionsAsync } from "expo-media-library";
+import {
+  type SavedMedia,
+  saveToYoinkAlbum,
+} from "@/features/downloads/services/yoinkAlbum";
 import type { Platform } from "@/features/extractor/types";
 import { MOBILE_UA } from "@/lib/constants";
 import { useDownloadStore } from "@/stores/downloadStore";
@@ -23,7 +27,7 @@ export async function downloadAndSave(
   platform: Platform,
   cookies?: string,
   onProgress?: (progress: number) => void,
-): Promise<string> {
+): Promise<SavedMedia> {
   const store = useDownloadStore.getState();
 
   // 1. Download to local file system
@@ -78,7 +82,7 @@ export async function downloadAndSave(
       );
     }
 
-    // 2. Save to device gallery
+    // 3. Save to the Yoink album in the device gallery
     store.updateJob(jobId, { status: "saving", progress: 1 });
 
     const hasPermission = await ensureMediaLibraryPermission();
@@ -88,16 +92,19 @@ export async function downloadAndSave(
       );
     }
 
-    const asset = await Asset.create(result.uri);
+    const saved = await saveToYoinkAlbum(result.uri);
 
-    const savedUri = await asset.getUri();
+    // 4. The intermediate file is no longer needed once it's in the gallery
+    await FileSystem.deleteAsync(result.uri, { idempotent: true }).catch(
+      () => {},
+    );
 
     store.updateJob(jobId, {
       status: "complete",
       progress: 1,
-      localUri: savedUri,
+      localUri: saved.localUri,
     });
-    return savedUri;
+    return saved;
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error during download";

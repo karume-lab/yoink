@@ -8,6 +8,7 @@ export const downloads = sqliteTable("downloads", {
   caption: text("caption"),
   coverUrl: text("cover_url"),
   localUri: text("local_uri").notNull(),
+  assetId: text("asset_id"),
   fileSize: integer("file_size"),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
 });

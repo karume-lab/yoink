@@ -9,10 +9,11 @@ import {
 import { PortalHost } from "@rn-primitives/portal";
 import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import { useFonts } from "expo-font";
-import { DarkTheme, Stack, ThemeProvider } from "expo-router";
+import { DarkTheme, Stack, ThemeProvider, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
+import { AppState } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { db } from "@/db/client";
 import migrations from "@/db/migrations/migrations";
@@ -24,8 +25,18 @@ import {
   NOTIFICATION,
   PRIMARY,
 } from "@/lib/colors";
+import {
+  registerBackgroundTasks,
+  runStartupCleanup,
+} from "@/services/BackgroundTasks";
+import { useOnboardingStore } from "@/stores/onboardingStore";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
+
+// Register the background task. expo-task-manager can fire the background
+// handler on cold start before this module registers it; registerTaskAsync is
+// idempotent and this never blocks startup.
+registerBackgroundTasks().catch(() => {});
 
 const NAV_THEME = {
   ...DarkTheme,
@@ -39,6 +50,33 @@ const NAV_THEME = {
   },
 };
 
+function RouteGuard() {
+  const router = useRouter();
+  const hasSeenOnboarding = useOnboardingStore(
+    (state) => state.hasSeenOnboarding,
+  );
+
+  // Not-yet-onboarded users should only ever see the onboarding screen.
+  useEffect(() => {
+    runStartupCleanup();
+    if (hasSeenOnboarding) return;
+    if (router.canGoBack()) router.replace("/");
+  }, [hasSeenOnboarding, router]);
+
+  // Purge expired downloads whenever the app returns to the foreground, so we
+  // don't rely solely on the OS scheduling the background task.
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") {
+        runStartupCleanup();
+      }
+    });
+    return () => subscription.remove();
+  }, []);
+
+  return null;
+}
+
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
     SpaceGrotesk: SpaceGrotesk_400Regular,
@@ -51,6 +89,10 @@ export default function RootLayout() {
   const { success: migrationSuccess, error: migrationError } = useMigrations(
     db,
     migrations,
+  );
+
+  const hasSeenOnboarding = useOnboardingStore(
+    (state) => state.hasSeenOnboarding,
   );
 
   useEffect(() => {
@@ -69,15 +111,17 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <StatusBar style="light" />
       <ThemeProvider value={NAV_THEME}>
+        <RouteGuard />
         <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Protected guard={hasSeenOnboarding}>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          </Stack.Protected>
+          <Stack.Protected guard={!hasSeenOnboarding}>
+            <Stack.Screen name="index" options={{ headerShown: false }} />
+          </Stack.Protected>
           <Stack.Screen
             name="about"
             options={{ headerShown: false, presentation: "modal" }}
-          />
-          <Stack.Screen
-            name="handle-share"
-            options={{ headerShown: false, animation: "none" }}
           />
         </Stack>
       </ThemeProvider>

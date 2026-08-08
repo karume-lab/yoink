@@ -56,7 +56,9 @@
             "singleShareMimeTypes": ["text/*"]
           }
         }
-      ]
+      ],
+      "expo-background-task",
+      "expo-task-manager"
     ],
     "experiments": {
       "typedRoutes": true,

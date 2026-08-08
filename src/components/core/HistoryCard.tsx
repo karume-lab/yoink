@@ -1,5 +1,9 @@
 import { Image, TouchableOpacity, View } from "react-native";
-import { IconExternalLink, IconShare } from "tabler-icons-react-native";
+import {
+  IconExternalLink,
+  IconShare,
+  IconTrash,
+} from "tabler-icons-react-native";
 import { Card } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
@@ -11,6 +15,7 @@ interface HistoryCardProps {
   coverUrl?: string;
   onShare?: () => void;
   onOpen?: () => void;
+  onDelete?: () => void;
 }
 
 export function HistoryCard({
@@ -20,6 +25,7 @@ export function HistoryCard({
   coverUrl,
   onShare,
   onOpen,
+  onDelete,
 }: HistoryCardProps) {
   return (
     <Card className="flex-row items-center p-3 py-3 gap-0 shadow-none">
@@ -65,6 +71,14 @@ export function HistoryCard({
             className="p-2 bg-popover rounded-md active:bg-border"
           >
             <Icon as={IconExternalLink} className="text-foreground" />
+          </TouchableOpacity>
+        )}
+        {onDelete && (
+          <TouchableOpacity
+            onPress={onDelete}
+            className="p-2 bg-popover rounded-md active:bg-border"
+          >
+            <Icon as={IconTrash} className="text-destructive" />
           </TouchableOpacity>
         )}
       </View>
