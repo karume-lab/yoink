@@ -7,14 +7,20 @@ import {
   withDangerousMod,
 } from "@expo/config-plugins";
 
-// Keep in sync with the hardcoded `package` in ShareReceiverService.kt.
+// Keep in sync with the hardcoded `package` in the Kotlin files.
 const PACKAGE_PATH = ["com", "karumelab", "yoink"];
 const SERVICE_NAME = ".ShareReceiverService";
+const ACTIVITY_NAME = ".ShareReceiverActivity";
 
 const PERMISSIONS = [
   "android.permission.FOREGROUND_SERVICE",
   "android.permission.FOREGROUND_SERVICE_DATA_SYNC",
   "android.permission.POST_NOTIFICATIONS",
+] as const;
+
+const KOTLIN_SOURCES = [
+  "ShareReceiverService.kt",
+  "ShareReceiverActivity.kt",
 ] as const;
 
 const withAndroidShareService: ConfigPlugin = (config) => {
@@ -34,8 +40,38 @@ const withAndroidShareService: ConfigPlugin = (config) => {
       ).map((name) => ({ $: { "android:name": name } })),
     ];
 
-    // Declare the background download service (no intent-filter — the share
-    // sheet resolves only activities, not services).
+    // Transparent activity that owns the ACTION_SEND intent filter. Android's
+    // share sheet resolves only to activities, so this is what gets picked —
+    // it forwards the link to the service and finishes before any UI shows.
+    application.activity = application.activity ?? [];
+    if (
+      !application.activity.some(
+        (activity) => activity.$["android:name"] === ACTIVITY_NAME,
+      )
+    ) {
+      application.activity.push({
+        $: {
+          "android:name": ACTIVITY_NAME,
+          "android:exported": "true",
+          "android:launchMode": "singleTop",
+          "android:noHistory": "true",
+          "android:excludeFromRecents": "true",
+          "android:theme": "@android:style/Theme.NoDisplay",
+        },
+        "intent-filter": [
+          {
+            action: [{ $: { "android:name": "android.intent.action.SEND" } }],
+            data: [{ $: { "android:mimeType": "text/*" } }],
+            category: [
+              { $: { "android:name": "android.intent.category.DEFAULT" } },
+            ],
+          },
+        ],
+      });
+    }
+
+    // Background download service (no intent-filter — started programmatically
+    // by ShareReceiverActivity).
     application.service = application.service ?? [];
     if (
       !application.service.some(
@@ -57,18 +93,20 @@ const withAndroidShareService: ConfigPlugin = (config) => {
   config = withDangerousMod(config, [
     "android",
     async (config) => {
-      const source = path.join(__dirname, "ShareReceiverService.kt");
-      const destination = path.join(
-        config.modRequest.platformProjectRoot,
-        "app",
-        "src",
-        "main",
-        "java",
-        ...PACKAGE_PATH,
-        "ShareReceiverService.kt",
-      );
-      fs.mkdirSync(path.dirname(destination), { recursive: true });
-      fs.copyFileSync(source, destination);
+      for (const file of KOTLIN_SOURCES) {
+        const source = path.join(__dirname, file);
+        const destination = path.join(
+          config.modRequest.platformProjectRoot,
+          "app",
+          "src",
+          "main",
+          "java",
+          ...PACKAGE_PATH,
+          file,
+        );
+        fs.mkdirSync(path.dirname(destination), { recursive: true });
+        fs.copyFileSync(source, destination);
+      }
       return config;
     },
   ]);

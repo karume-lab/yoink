@@ -37,11 +37,14 @@ export async function deleteYoinkAssets(assetIds: string[]): Promise<void> {
   const valid = assetIds.filter((id) => id.length > 0);
   if (valid.length === 0) return;
 
-  try {
-    const assets = valid.map((id) => new MediaLibrary.Asset(id));
-    await MediaLibrary.Asset.delete(assets);
-  } catch (error) {
-    console.error("Failed to delete Yoink assets:", error);
+  // Delete one at a time so a stale id (already removed from the gallery, or
+  // one that no longer resolves on Android) doesn't fail the whole batch.
+  for (const id of valid) {
+    try {
+      await MediaLibrary.Asset.delete([new MediaLibrary.Asset(id)]);
+    } catch (error) {
+      console.warn(`Skipping asset ${id} (already deleted?):`, error);
+    }
   }
 }
 

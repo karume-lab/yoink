@@ -52,8 +52,7 @@
             }
           },
           "android": {
-            "enabled": true,
-            "singleShareMimeTypes": ["text/*"]
+            "enabled": false
           }
         }
       ],
