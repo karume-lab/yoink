@@ -11,11 +11,11 @@ export function TapeProgress({ progress, segments = 20 }: TapeProgressProps) {
 
 	return (
 		<View className="flex-row items-center gap-3">
-			<View className="flex-row gap-[2px] h-4">
+			<View className="flex-row gap-0.5 h-4">
 				{Array.from({ length: segments }).map((_, i) => (
 					<View
 						key={i}
-						className={`w-[4px] h-full ${
+						className={`w-1 h-full ${
 							i < filledSegments ? "bg-primary" : "bg-popover"
 						}`}
 					/>
