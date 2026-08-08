@@ -17,26 +17,35 @@ export async function extractTikTok(url: string): Promise<ExtractResult> {
 
   const html = await response.text();
 
+  // TikTok escapes unicode in the page source (e.g. \u002F for "/"), so URLs
+  // come back as "https:\u002F\u002F..." and never match a plain "https://".
+  const decodeEscapes = (value: string) =>
+    value
+      .replace(/\\u[\dA-F]{4}/gi, (m) =>
+        String.fromCharCode(parseInt(m.slice(2), 16)),
+      )
+      .replace(/\\n/g, "\n");
+
   try {
     // We bypass the fragile JSON structure entirely and use regex on the raw HTML
 
     // 1. Video URL (playAddr or downloadAddr)
     let videoUrl = "";
-    const playAddrMatch = html.match(/"playAddr":"(https?:\/\/[^"]+)"/);
-    const downloadAddrMatch = html.match(/"downloadAddr":"(https?:\/\/[^"]+)"/);
+    const playAddrMatch = html.match(/"playAddr":"([^"]+)"/);
+    const downloadAddrMatch = html.match(/"downloadAddr":"([^"]+)"/);
     if (playAddrMatch?.[1]) {
-      videoUrl = playAddrMatch[1].replace(/\\u002F/g, "/");
+      videoUrl = decodeEscapes(playAddrMatch[1]);
     } else if (downloadAddrMatch?.[1]) {
-      videoUrl = downloadAddrMatch[1].replace(/\\u002F/g, "/");
+      videoUrl = decodeEscapes(downloadAddrMatch[1]);
     } else {
       throw new Error("Could not find video URL in page source");
     }
 
     // 2. Cover image
     let coverUrl = "";
-    const coverMatch = html.match(/"cover":"(https?:\/\/[^"]+)"/);
+    const coverMatch = html.match(/"cover":"([^"]+)"/);
     if (coverMatch?.[1]) {
-      coverUrl = coverMatch[1].replace(/\\u002F/g, "/");
+      coverUrl = decodeEscapes(coverMatch[1]);
     }
 
     // 3. Author username
@@ -50,12 +59,7 @@ export async function extractTikTok(url: string): Promise<ExtractResult> {
     let caption = "";
     const descMatch = html.match(/"desc":"([^"]*)"/);
     if (descMatch?.[1]) {
-      // Decode unicode escapes
-      caption = descMatch[1]
-        .replace(/\\u[\dA-F]{4}/gi, (m) =>
-          String.fromCharCode(parseInt(m.replace(/\\u/g, ""), 16)),
-        )
-        .replace(/\\n/g, "\n");
+      caption = decodeEscapes(descMatch[1]);
     }
 
     return {

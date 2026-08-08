@@ -13,6 +13,7 @@ module.exports = (api) => {
           },
         },
       ],
+      ["inline-import", { extensions: [".sql"] }],
       require.resolve("react-native-reanimated/plugin"),
     ],
   };
