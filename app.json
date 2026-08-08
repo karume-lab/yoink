@@ -42,6 +42,7 @@
       [
         "expo-sharing",
         {
+          "appGroupId": "group.com.karume-lab.yoink",
           "ios": {
             "enabled": true,
             "activationRule": {
