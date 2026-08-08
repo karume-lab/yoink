@@ -30,8 +30,8 @@ export default function SettingsScreen() {
       <View className="gap-2">
         <Text variant="title">Instagram Authentication</Text>
         <Text variant="caption" className="text-muted-foreground leading-snug">
-          To download Instagram stories, provide your sessionid cookie. This is
-          stored securely on your device.
+          To download Instagram reels, posts, and stories, provide your
+          sessionid cookie. This is stored securely on your device.
         </Text>
 
         <Card className="p-3 gap-3 shadow-none">

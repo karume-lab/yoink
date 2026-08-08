@@ -6,7 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "yoink",
-
     "ios": {
       "bundleIdentifier": "com.karume-lab.yoink",
       "userInterfaceStyle": "dark"
@@ -38,6 +37,23 @@
         {
           "photosPermission": "Allow Yoink to save videos to your gallery.",
           "savePhotosPermission": "Allow Yoink to save videos to your gallery."
+        }
+      ],
+      [
+        "expo-sharing",
+        {
+          "ios": {
+            "enabled": true,
+            "activationRule": {
+              "supportsWebUrlWithMaxCount": 1,
+              "supportsWebPageWithMaxCount": 1,
+              "supportsText": true
+            }
+          },
+          "android": {
+            "enabled": true,
+            "singleShareMimeTypes": ["text/*"]
+          }
         }
       ]
     ],

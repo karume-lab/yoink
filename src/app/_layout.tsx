@@ -75,6 +75,10 @@ export default function RootLayout() {
             name="about"
             options={{ headerShown: false, presentation: "modal" }}
           />
+          <Stack.Screen
+            name="handle-share"
+            options={{ headerShown: false, animation: "none" }}
+          />
         </Stack>
       </ThemeProvider>
       <PortalHost />
