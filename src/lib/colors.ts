@@ -1,10 +1,10 @@
 // Design tokens — must match global.css and the Yoink design system.
-export const BACKGROUND = "#0B0B0D"; // --color-background (bg-base)
-export const CARD = "#151517"; // --color-card (bg-surface)
-export const POPOVER = "#1E1E21"; // --color-popover (bg-surface-2)
-export const BORDER = "#2B2B2F"; // --color-border
-export const FOREGROUND = "#EDEDEF"; // --color-foreground (text-primary)
-export const MUTED_FOREGROUND = "#8F8F96"; // --color-muted-foreground (text-secondary)
-export const PRIMARY = "#D98A3D"; // --color-primary (accent copper)
-export const NOTIFICATION = "#C75450"; // --color-destructive (danger)
+export const BACKGROUND = "#000000"; // --color-background
+export const CARD = "#09000F"; // --color-card
+export const POPOVER = "#09000F"; // --color-popover
+export const BORDER = "#1A0A26"; // --color-border
+export const FOREGROUND = "#FFFFFF"; // --color-foreground
+export const MUTED_FOREGROUND = "#A3A3A3"; // --color-muted-foreground
+export const PRIMARY = "#B23E9E"; // --color-primary
+export const NOTIFICATION = "#E5484D"; // --color-destructive
 export const SUCCESS = "#6FA96B"; // --color-success

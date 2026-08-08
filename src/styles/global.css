@@ -13,31 +13,38 @@
 
   --spacing-hairline: hairlineWidth();
 
-  /* Yoink Design System - Tool-like Aesthetics */
-  --color-background: #0b0b0d; /* bg-base */
-  --color-card: #151517; /* bg-surface */
-  --color-card-foreground: #ededef;
-  --color-popover: #1e1e21; /* bg-surface-2 */
-  --color-popover-foreground: #ededef;
-  --color-border: #2b2b2f; /* hairline borders */
-  --color-input: #2b2b2f;
-  --color-foreground: #ededef; /* text-primary */
-  --color-muted: #151517;
-  --color-muted-foreground: #8f8f96; /* text-secondary */
-
-  --color-primary: #d98a3d; /* accent (copper) */
-  --color-primary-foreground: #0b0b0d; /* dark text on copper */
-
-  --color-secondary: #1e1e21;
-  --color-secondary-foreground: #ededef;
-
-  --color-accent: #1e1e21;
-  --color-accent-foreground: #ededef;
-
-  --color-success: #6fa96b; /* success check */
-  --color-destructive: #c75450; /* danger */
-
-  --color-ring: #d98a3d; /* accent */
+  /* Cue Theme - Shadow Black and Hot Magenta */
+  --color-background: #000000;
+  --color-foreground: #ffffff;
+  --color-card: #09000f;
+  --color-card-foreground: #ffffff;
+  --color-popover: #09000f;
+  --color-popover-foreground: #ffffff;
+  --color-primary: #b23e9e;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #1a0a26;
+  --color-secondary-foreground: #ffffff;
+  --color-muted: #1a0a26;
+  --color-muted-foreground: #a3a3a3;
+  --color-accent: #2c103f;
+  --color-accent-foreground: #ffffff;
+  --color-destructive: #e5484d;
+  --color-border: #1a0a26;
+  --color-input: #09000f;
+  --color-ring: #b23e9e;
+  --color-chart-1: #b23e9e;
+  --color-chart-2: #2c103f;
+  --color-chart-3: #ffffff;
+  --color-chart-4: #a3a3a3;
+  --color-chart-5: #1a0a26;
+  --color-sidebar: #000000;
+  --color-sidebar-foreground: #ffffff;
+  --color-sidebar-primary: #b23e9e;
+  --color-sidebar-primary-foreground: #ffffff;
+  --color-sidebar-accent: #2c103f;
+  --color-sidebar-accent-foreground: #ffffff;
+  --color-sidebar-border: #1a0a26;
+  --color-sidebar-ring: #b23e9e;
 
   /* Fonts */
   --font-display: "SpaceGrotesk";
