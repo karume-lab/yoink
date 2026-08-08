@@ -10,7 +10,6 @@ import {
 // Keep in sync with the hardcoded `package` in ShareReceiverService.kt.
 const PACKAGE_PATH = ["com", "karumelab", "yoink"];
 const SERVICE_NAME = ".ShareReceiverService";
-const SHARING_GENERATED_TAG = "expo-sharing-intent-filters";
 
 const PERMISSIONS = [
   "android.permission.FOREGROUND_SERVICE",
@@ -24,20 +23,7 @@ const withAndroidShareService: ConfigPlugin = (config) => {
     const application =
       AndroidConfig.Manifest.getMainApplicationOrThrow(manifest);
 
-    // Route ACTION_SEND shares to the background service instead of launching
-    // the app. Drop the intent filters expo-sharing generates on MainActivity.
-    const mainActivity = application.activity?.find(
-      (activity) => activity.$["android:name"] === ".MainActivity",
-    );
-    if (mainActivity?.["intent-filter"]?.length) {
-      mainActivity["intent-filter"] = mainActivity["intent-filter"].filter(
-        (filter) =>
-          (filter.$ as Record<string, string> | undefined)?.[
-            SHARING_GENERATED_TAG
-          ] !== "true",
-      );
-    }
-
+    // Add foreground-service permissions at the manifest root.
     manifest.manifest["uses-permission"] = [
       ...(manifest.manifest["uses-permission"] ?? []),
       ...PERMISSIONS.filter(
@@ -48,6 +34,8 @@ const withAndroidShareService: ConfigPlugin = (config) => {
       ).map((name) => ({ $: { "android:name": name } })),
     ];
 
+    // Declare the background download service (no intent-filter — the share
+    // sheet resolves only activities, not services).
     application.service = application.service ?? [];
     if (
       !application.service.some(
@@ -57,18 +45,9 @@ const withAndroidShareService: ConfigPlugin = (config) => {
       application.service.push({
         $: {
           "android:name": SERVICE_NAME,
-          "android:exported": "true",
+          "android:exported": "false",
           "android:foregroundServiceType": "dataSync",
         },
-        "intent-filter": [
-          {
-            action: [{ $: { "android:name": "android.intent.action.SEND" } }],
-            data: [{ $: { "android:mimeType": "text/*" } }],
-            category: [
-              { $: { "android:name": "android.intent.category.DEFAULT" } },
-            ],
-          },
-        ],
       });
     }
 
