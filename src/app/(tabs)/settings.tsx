@@ -5,13 +5,10 @@ import { View } from "react-native";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import { Text } from "@/components/ui/text";
 import { IG_SESSION_KEY } from "@/lib/constants";
-import { useSettingsStore } from "@/stores/settingsStore";
 
 export default function SettingsScreen() {
-  const { saveToAlbum, albumName, updateSettings } = useSettingsStore();
   const [cookie, setCookie] = useState("");
 
   useEffect(() => {
@@ -30,34 +27,6 @@ export default function SettingsScreen() {
 
   return (
     <View className="flex-1 bg-background px-4 py-4 gap-6">
-      <View className="gap-2">
-        <Text variant="title">Downloads</Text>
-        <Card className="p-3 gap-4 shadow-none">
-          <View className="flex-row items-center justify-between">
-            <Text variant="body">Save to specific album</Text>
-            <Switch
-              checked={saveToAlbum}
-              onCheckedChange={(val: boolean) =>
-                updateSettings({ saveToAlbum: val })
-              }
-            />
-          </View>
-
-          {saveToAlbum && (
-            <View>
-              <Text variant="caption" className="text-muted-foreground mb-1">
-                Album Name
-              </Text>
-              <Input
-                value={albumName}
-                onChangeText={(val) => updateSettings({ albumName: val })}
-                className="bg-background"
-              />
-            </View>
-          )}
-        </Card>
-      </View>
-
       <View className="gap-2">
         <Text variant="title">Instagram Authentication</Text>
         <Text variant="caption" className="text-muted-foreground leading-snug">

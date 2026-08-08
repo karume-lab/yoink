@@ -17,41 +17,46 @@ export async function extractTikTok(url: string): Promise<ExtractResult> {
 
   const html = await response.text();
 
-  // Try to find the __UNIVERSAL_DATA_FOR_REHYDRATION__ script tag
-  const match = html.match(
-    /<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__" type="application\/json">([^<]+)<\/script>/,
-  );
-
-  if (!match?.[1]) {
-    throw new Error(
-      "Could not find __UNIVERSAL_DATA_FOR_REHYDRATION__ tag. TikTok page structure may have changed.",
-    );
-  }
-
   try {
-    const data = JSON.parse(match[1]);
+    // We bypass the fragile JSON structure entirely and use regex on the raw HTML
 
-    // The exact JSON path varies and TikTok changes it occasionally.
-    // Currently, video data is usually inside:
-    // data["__DEFAULT_SCOPE__"]["webapp.video-detail"]["itemInfo"]["itemStruct"]
+    // 1. Video URL (playAddr or downloadAddr)
+    let videoUrl = "";
+    const playAddrMatch = html.match(/"playAddr":"(https?:\/\/[^"]+)"/);
+    const downloadAddrMatch = html.match(/"downloadAddr":"(https?:\/\/[^"]+)"/);
+    if (playAddrMatch?.[1]) {
+      videoUrl = playAddrMatch[1].replace(/\\u002F/g, "/");
+    } else if (downloadAddrMatch?.[1]) {
+      videoUrl = downloadAddrMatch[1].replace(/\\u002F/g, "/");
+    } else {
+      throw new Error("Could not find video URL in page source");
+    }
 
-    const defaultScope = data.__DEFAULT_SCOPE__;
-    if (!defaultScope) throw new Error("Missing __DEFAULT_SCOPE__ in JSON");
+    // 2. Cover image
+    let coverUrl = "";
+    const coverMatch = html.match(/"cover":"(https?:\/\/[^"]+)"/);
+    if (coverMatch?.[1]) {
+      coverUrl = coverMatch[1].replace(/\\u002F/g, "/");
+    }
 
-    const videoDetail = defaultScope["webapp.video-detail"];
-    if (!videoDetail) throw new Error("Missing webapp.video-detail in JSON");
+    // 3. Author username
+    let author = "Unknown";
+    const uniqueIdMatch = html.match(/"uniqueId":"([^"]+)"/);
+    if (uniqueIdMatch?.[1]) {
+      author = uniqueIdMatch[1];
+    }
 
-    const itemStruct = videoDetail.itemInfo?.itemStruct;
-    if (!itemStruct) throw new Error("Missing itemStruct in JSON");
-
-    // We want the watermark-free video url, typically playAddr or downloadAddr
-    const videoUrl =
-      itemStruct.video?.playAddr || itemStruct.video?.downloadAddr;
-    if (!videoUrl) throw new Error("Missing video URL in itemStruct.video");
-
-    const coverUrl = itemStruct.video?.cover || itemStruct.video?.originCover;
-    const author = itemStruct.author?.uniqueId || itemStruct.author?.nickname;
-    const caption = itemStruct.desc;
+    // 4. Caption / description
+    let caption = "";
+    const descMatch = html.match(/"desc":"([^"]*)"/);
+    if (descMatch?.[1]) {
+      // Decode unicode escapes
+      caption = descMatch[1]
+        .replace(/\\u[\dA-F]{4}/gi, (m) =>
+          String.fromCharCode(parseInt(m.replace(/\\u/g, ""), 16)),
+        )
+        .replace(/\\n/g, "\n");
+    }
 
     return {
       platform: "tiktok",

@@ -14,8 +14,8 @@ const zustandStorage = {
 };
 
 interface SettingsStore {
-  saveToAlbum: boolean;
-  albumName: string;
+  // Placeholder for future settings
+  _initialized?: boolean;
   updateSettings: (
     updates: Partial<Omit<SettingsStore, "updateSettings">>,
   ) => void;
@@ -24,8 +24,7 @@ interface SettingsStore {
 export const useSettingsStore = create<SettingsStore>()(
   persist(
     (set) => ({
-      saveToAlbum: true,
-      albumName: "Kaza",
+      _initialized: true,
       updateSettings: (updates) => set((state) => ({ ...state, ...updates })),
     }),
     {

@@ -7,12 +7,15 @@ import {
   SpaceGrotesk_500Medium,
 } from "@expo-google-fonts/space-grotesk";
 import { PortalHost } from "@rn-primitives/portal";
+import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import { useFonts } from "expo-font";
 import { DarkTheme, Stack, ThemeProvider } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { db } from "@/db/client";
+import migrations from "@/db/migrations/migrations";
 import {
   BACKGROUND,
   BORDER,
@@ -45,13 +48,22 @@ export default function RootLayout() {
     IBMPlexMono: IBMPlexMono_400Regular,
   });
 
+  const { success: migrationSuccess, error: migrationError } = useMigrations(
+    db,
+    migrations,
+  );
+
   useEffect(() => {
-    if (fontsLoaded) {
+    if (fontsLoaded && migrationSuccess) {
       SplashScreen.hideAsync().catch(() => {});
     }
-  }, [fontsLoaded]);
+  }, [fontsLoaded, migrationSuccess]);
 
-  if (!fontsLoaded) return null;
+  if (migrationError) {
+    console.error("Migration error:", migrationError);
+  }
+
+  if (!fontsLoaded || !migrationSuccess) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
