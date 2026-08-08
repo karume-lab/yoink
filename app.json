@@ -6,9 +6,10 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "yoink",
-    "userInterfaceStyle": "dark",
+
     "ios": {
-      "bundleIdentifier": "com.karume-lab.yoink"
+      "bundleIdentifier": "com.karume-lab.yoink",
+      "userInterfaceStyle": "dark"
     },
     "android": {
       "adaptiveIcon": {
@@ -16,7 +17,8 @@
         "foregroundImage": "./assets/adaptive-icon.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.karumelab.yoink"
+      "package": "com.karumelab.yoink",
+      "userInterfaceStyle": "dark"
     },
     "plugins": [
       "expo-router",
@@ -25,11 +27,7 @@
         {
           "backgroundColor": "#0B0B0D",
           "image": "./assets/splash-icon.png",
-          "imageWidth": 200,
-          "dark": {
-            "image": "./assets/splash-icon-dark.png",
-            "backgroundColor": "#0B0B0D"
-          }
+          "imageWidth": 200
         }
       ],
       "expo-font",
