@@ -4,7 +4,7 @@
     "slug": "yoink",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/images/icon.png",
     "scheme": "yoink",
     "ios": {
       "bundleIdentifier": "com.karume-lab.yoink",
@@ -13,7 +13,7 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#0B0B0D",
-        "foregroundImage": "./assets/adaptive-icon.png"
+        "foregroundImage": "./assets/images/adaptive-icon.png"
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.karumelab.yoink",
@@ -25,7 +25,7 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#0B0B0D",
-          "image": "./assets/splash-icon.png",
+          "image": "./assets/images/splash-icon.png",
           "imageWidth": 200
         }
       ],
