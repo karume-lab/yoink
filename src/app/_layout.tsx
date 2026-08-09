@@ -29,6 +29,7 @@ import {
   registerBackgroundTasks,
   runStartupCleanup,
 } from "@/services/BackgroundTasks";
+import { reconcileNativeDownloads } from "@/services/NativeDownloadSync";
 import { useOnboardingStore } from "@/stores/onboardingStore";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -58,7 +59,12 @@ function RouteGuard() {
 
   // Not-yet-onboarded users should only ever see the onboarding screen.
   useEffect(() => {
-    runStartupCleanup();
+    (async () => {
+      // Import native share downloads first, so the retention cleanup that
+      // follows applies to them too.
+      await reconcileNativeDownloads().catch(() => {});
+      runStartupCleanup();
+    })();
     if (hasSeenOnboarding) return;
     if (router.canGoBack()) router.replace("/");
   }, [hasSeenOnboarding, router]);

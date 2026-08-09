@@ -19,9 +19,12 @@ import android.provider.MediaStore
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import java.io.File
+import java.util.UUID
 import java.util.concurrent.Executors
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.json.JSONArray
+import org.json.JSONObject
 
 /**
  * Background share target. Picking Yoink from the Android share sheet starts
@@ -117,7 +120,12 @@ class ShareReceiverService : Service() {
 
     val label = extracted.author?.let { "$it (${extracted.platform})" }
       ?: "Your video"
-    saveToYoinkAlbum(file, filename)
+    val fileSize = file.length()
+    val savedUri = saveToYoinkAlbum(file, filename)
+
+    // Record the download so the app's History and Queue tabs reflect it on
+    // the next launch (the service runs headless, without the JS runtime).
+    recordNativeDownload(extracted, url, savedUri, fileSize)
 
     notifyDone(label)
   }
@@ -260,7 +268,7 @@ class ShareReceiverService : Service() {
     return dest
   }
 
-  private fun saveToYoinkAlbum(file: File, filename: String) {
+  private fun saveToYoinkAlbum(file: File, filename: String): Uri? {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
       val values = ContentValues().apply {
         put(MediaStore.Video.Media.DISPLAY_NAME, filename)
@@ -277,6 +285,8 @@ class ShareReceiverService : Service() {
       values.clear()
       values.put(MediaStore.Video.Media.IS_PENDING, 0)
       resolver.update(uri, values, null, null)
+      file.delete()
+      return uri
     } else {
       val dir = File(
         Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
@@ -286,8 +296,47 @@ class ShareReceiverService : Service() {
       val dest = File(dir, filename)
       file.inputStream().use { input -> dest.outputStream().use { output -> input.copyTo(output) } }
       MediaScannerConnection.scanFile(this, arrayOf(dest.absolutePath), arrayOf("video/mp4"), null)
+      file.delete()
+      return Uri.fromFile(dest)
     }
-    file.delete()
+  }
+
+  // MARK: - Native -> JS record
+
+  private fun recordNativeDownload(
+    extracted: Extracted,
+    sourceUrl: String,
+    savedUri: Uri?,
+    fileSize: Long,
+  ) {
+    if (savedUri == null) return
+    val recordFile = File(filesDir, NATIVE_DOWNLOADS_FILE)
+    val record = JSONObject().apply {
+      put("id", UUID.randomUUID().toString())
+      put("platform", extracted.platform)
+      put("sourceUrl", sourceUrl)
+      put("author", extracted.author ?: JSONObject.NULL)
+      put("localUri", savedUri.toString())
+      put("assetId", savedUri.lastPathSegment ?: savedUri.toString())
+      put("fileSize", fileSize)
+      put("createdAt", System.currentTimeMillis())
+    }
+
+    var records = JSONArray()
+    try {
+      if (recordFile.exists()) {
+        records = JSONArray(recordFile.readText())
+      }
+    } catch (t: Throwable) {
+      Log.w(TAG, "Discarding unreadable native downloads file", t)
+    }
+    records.put(record)
+
+    try {
+      recordFile.writeText(records.toString())
+    } catch (t: Throwable) {
+      Log.w(TAG, "Failed to record native download", t)
+    }
   }
 
   // MARK: - Notifications
@@ -417,6 +466,7 @@ class ShareReceiverService : Service() {
     const val TAG = "ShareReceiverService"
     const val CHANNEL_ID = "downloads"
     const val NOTIFICATION_ID = 1001
+    const val NATIVE_DOWNLOADS_FILE = "native-downloads.json"
     const val MOBILE_UA =
       "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
   }

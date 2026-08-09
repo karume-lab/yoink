@@ -1,4 +1,4 @@
-import * as FileSystem from "expo-file-system/legacy";
+import { File, Paths } from "expo-file-system";
 import { requestPermissionsAsync } from "expo-media-library";
 import {
   type SavedMedia,
@@ -33,7 +33,7 @@ export async function downloadAndSave(
   // 1. Download to local file system
   store.updateJob(jobId, { status: "downloading", progress: 0 });
 
-  const fileUri = `${FileSystem.documentDirectory}${filename}`;
+  const file = new File(Paths.document, filename);
 
   const headers: Record<string, string> = {
     "User-Agent": MOBILE_UA,
@@ -42,41 +42,20 @@ export async function downloadAndSave(
   };
   if (cookies) headers.Cookie = cookies;
 
-  const downloadResumable = FileSystem.createDownloadResumable(
-    videoUrl,
-    fileUri,
-    { headers },
-    (downloadProgress) => {
-      const progress =
-        downloadProgress.totalBytesWritten /
-        downloadProgress.totalBytesExpectedToWrite;
-      if (onProgress) onProgress(progress);
-      store.updateJob(jobId, { progress });
-    },
-  );
-
   try {
-    const result = await downloadResumable.downloadAsync();
-
-    if (!result?.uri) {
-      throw new Error("Download failed to produce a valid URI");
-    }
+    // Non-2xx responses reject inside downloadFileAsync.
+    const downloaded = await File.downloadFileAsync(videoUrl, file, {
+      headers,
+      idempotent: true,
+      onProgress: ({ bytesWritten, totalBytes }) => {
+        const progress = totalBytes > 0 ? bytesWritten / totalBytes : 0;
+        if (onProgress) onProgress(progress);
+        store.updateJob(jobId, { progress });
+      },
+    });
 
     // 2. Validate the downloaded file is an actual video, not an error page
-    if (result.status < 200 || result.status >= 300) {
-      throw new Error(
-        `Media server refused the download (status ${result.status}). The link may have expired — try again.`,
-      );
-    }
-
-    if (result.mimeType?.startsWith("text/")) {
-      throw new Error(
-        "Media server returned an error page instead of a video. The link may have expired — try again.",
-      );
-    }
-
-    const fileInfo = await FileSystem.getInfoAsync(result.uri);
-    if (!fileInfo.exists || fileInfo.size < 10_000) {
+    if (!downloaded.exists || downloaded.size < 10_000) {
       throw new Error(
         "Downloaded file is too small to be a valid video. The link may have expired — try again.",
       );
@@ -92,12 +71,14 @@ export async function downloadAndSave(
       );
     }
 
-    const saved = await saveToYoinkAlbum(result.uri);
+    const saved = await saveToYoinkAlbum(downloaded.uri);
 
     // 4. The intermediate file is no longer needed once it's in the gallery
-    await FileSystem.deleteAsync(result.uri, { idempotent: true }).catch(
-      () => {},
-    );
+    try {
+      downloaded.delete();
+    } catch {
+      // Already gone — nothing to clean up.
+    }
 
     store.updateJob(jobId, {
       status: "complete",
@@ -106,8 +87,14 @@ export async function downloadAndSave(
     });
     return saved;
   } catch (error) {
-    const errorMessage =
+    const rawMessage =
       error instanceof Error ? error.message : "Unknown error during download";
+    // downloadFileAsync rejects non-2xx responses with a message that embeds
+    // the status code; surface it with the familiar wording instead.
+    const statusMatch = rawMessage.match(/\b([1-5]\d{2})\b/);
+    const errorMessage = statusMatch
+      ? `Media server refused the download (status ${statusMatch[1]}). The link may have expired — try again.`
+      : rawMessage;
     store.updateJob(jobId, { status: "error", error: errorMessage });
     throw error;
   }
