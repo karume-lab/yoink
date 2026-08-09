@@ -1,11 +1,13 @@
-import fs from "node:fs";
-import path from "node:path";
-import {
-  AndroidConfig,
-  type ConfigPlugin,
-  withAndroidManifest,
-  withDangerousMod,
-} from "@expo/config-plugins";
+// Written in CommonJS form (require/module.exports, no ESM `import`/`export`):
+// Node then treats this file as a CommonJS module instead of an ES module.
+// The VS Code Expo tools extension loads it with native `require()` racing an
+// `import()`; requiring an ES module in that state throws
+// "Cannot require() ES Module ... because it is not yet fully loaded". Keeping
+// this file CJS sidesteps the ESM machinery entirely.
+const fs = require("node:fs");
+const path = require("node:path");
+const { AndroidConfig, withAndroidManifest, withDangerousMod } =
+  require("@expo/config-plugins") as typeof import("@expo/config-plugins");
 
 // Keep in sync with the hardcoded `package` in the Kotlin files.
 const PACKAGE_PATH = ["com", "karumelab", "yoink"];
@@ -16,14 +18,13 @@ const PERMISSIONS = [
   "android.permission.FOREGROUND_SERVICE",
   "android.permission.FOREGROUND_SERVICE_DATA_SYNC",
   "android.permission.POST_NOTIFICATIONS",
-] as const;
+];
 
-const KOTLIN_SOURCES = [
-  "ShareReceiverService.kt",
-  "ShareReceiverActivity.kt",
-] as const;
+const KOTLIN_SOURCES = ["ShareReceiverService.kt", "ShareReceiverActivity.kt"];
 
-const withAndroidShareService: ConfigPlugin = (config) => {
+const withAndroidShareService: import("@expo/config-plugins").ConfigPlugin = (
+  config,
+) => {
   config = withAndroidManifest(config, (config) => {
     const manifest = config.modResults;
     const application =
@@ -114,4 +115,5 @@ const withAndroidShareService: ConfigPlugin = (config) => {
   return config;
 };
 
-export default withAndroidShareService;
+module.exports = withAndroidShareService;
+module.exports.default = withAndroidShareService;

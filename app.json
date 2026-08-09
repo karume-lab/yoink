@@ -57,7 +57,18 @@
       ],
       "expo-background-task",
       "expo-task-manager",
-      "./plugins/withAndroidShareService.ts"
+      "./plugins/withAndroidShareService.ts",
+      "./plugins/withArmOnly.ts",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "enableBundleCompression": true
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
