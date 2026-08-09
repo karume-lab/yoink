@@ -30,7 +30,25 @@ export interface NativeDownloadRecord {
  * the History insert is deduplicated on the record id, and Queue jobs are
  * simply overwritten.
  */
-export async function reconcileNativeDownloads(): Promise<void> {
+let reconcileInFlight: Promise<void> | null = null;
+
+/**
+ * Imports downloads performed by the native share service into the JS app:
+ * one History row and one completed Queue job per record. The records file is
+ * removed once imported, so a launch that fails partway re-imports the rest —
+ * the History insert is deduplicated on the record id, and Queue jobs are
+ * simply overwritten.
+ */
+export function reconcileNativeDownloads(): Promise<void> {
+  if (!reconcileInFlight) {
+    reconcileInFlight = doReconcile().finally(() => {
+      reconcileInFlight = null;
+    });
+  }
+  return reconcileInFlight;
+}
+
+async function doReconcile(): Promise<void> {
   const recordFile = new File(Paths.document, NATIVE_DOWNLOADS_FILE);
   if (!recordFile.exists) return;
 

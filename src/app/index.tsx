@@ -1,8 +1,16 @@
 import * as MediaLibrary from "expo-media-library";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Alert, View } from "react-native";
+import { View } from "react-native";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Text } from "@/components/ui/text";
 import { configureNotifications } from "@/services/Notifications";
 import { useOnboardingStore } from "@/stores/onboardingStore";
@@ -15,6 +23,7 @@ export default function OnboardingScreen() {
   const [permissionGranted, setPermissionGranted] = useState(false);
   const [notificationsGranted, setNotificationsGranted] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [permissionDialogOpen, setPermissionDialogOpen] = useState(false);
 
   const requestPermission = async () => {
     setBusy(true);
@@ -23,10 +32,7 @@ export default function OnboardingScreen() {
       if (permission.granted) {
         setPermissionGranted(true);
       } else {
-        Alert.alert(
-          "Permission needed",
-          "Yoink needs gallery access to save your downloads so they appear in your gallery and WhatsApp status picker.",
-        );
+        setPermissionDialogOpen(true);
       }
     } finally {
       setBusy(false);
@@ -95,6 +101,29 @@ export default function OnboardingScreen() {
       >
         <Text>Finish setup</Text>
       </Button>
+
+      <Dialog
+        open={permissionDialogOpen}
+        onOpenChange={setPermissionDialogOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Permission needed</DialogTitle>
+            <DialogDescription>
+              Yoink needs gallery access to save your downloads so they appear
+              in your gallery and WhatsApp status picker.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="default"
+              onPress={() => setPermissionDialogOpen(false)}
+            >
+              <Text>OK</Text>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </View>
   );
 }

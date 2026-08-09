@@ -23,7 +23,32 @@ function triggerForPlatform() {
 }
 
 export async function configureNotifications(): Promise<boolean> {
-  if (configured) return true;
+  await setupInfrastructure();
+
+  const current = await Notifications.getPermissionsAsync();
+  if (current.granted) return true;
+
+  const requested = await Notifications.requestPermissionsAsync();
+  return requested.granted;
+}
+
+/**
+ * Sets up the notification handler/channel and requests POST_NOTIFICATIONS
+ * only when the user has never been asked (Android 13+), so a foreground
+ * share download can show its progress without nagging on every launch.
+ */
+export async function requestNotificationsIfNeeded(): Promise<boolean> {
+  await setupInfrastructure();
+
+  const current = await Notifications.getPermissionsAsync();
+  if (current.granted) return true;
+  if (current.status !== "undetermined") return false;
+
+  return (await Notifications.requestPermissionsAsync()).granted;
+}
+
+async function setupInfrastructure(): Promise<void> {
+  if (configured) return;
 
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
@@ -38,18 +63,10 @@ export async function configureNotifications(): Promise<boolean> {
     await Notifications.setNotificationChannelAsync(DOWNLOAD_CHANNEL_ID, {
       name: "Downloads",
       importance: Notifications.AndroidImportance.DEFAULT,
-    });
+    }).catch(() => {});
   }
 
-  const current = await Notifications.getPermissionsAsync();
-  if (current.granted) {
-    configured = true;
-    return true;
-  }
-
-  const requested = await Notifications.requestPermissionsAsync();
-  configured = requested.granted;
-  return requested.granted;
+  configured = true;
 }
 
 export async function showDownloadProgress(

@@ -255,9 +255,26 @@ class ShareReceiverService : Service() {
     }
 
     val dest = File(cacheDir, filename)
+    val total = response.body?.contentLength() ?: 0L
     response.body?.let { body ->
-      body.byteStream().use { input ->
-        dest.outputStream().use { output -> input.copyTo(output) }
+      val input = body.byteStream()
+      val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+      var read = input.read(buffer)
+      var written = 0L
+      var lastPercent = -1
+      dest.outputStream().use { output ->
+        while (read != -1) {
+          output.write(buffer, 0, read)
+          written += read
+          if (total > 0) {
+            val percent = ((written * 100) / total).toInt().coerceIn(0, 100)
+            if (percent != lastPercent) {
+              lastPercent = percent
+              updateForeground("Downloading video", "$percent%", percent)
+            }
+          }
+          read = input.read(buffer)
+        }
       }
       response.close()
     }

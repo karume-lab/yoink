@@ -30,6 +30,7 @@ import {
   runStartupCleanup,
 } from "@/services/BackgroundTasks";
 import { reconcileNativeDownloads } from "@/services/NativeDownloadSync";
+import { requestNotificationsIfNeeded } from "@/services/Notifications";
 import { useOnboardingStore } from "@/stores/onboardingStore";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -65,16 +66,22 @@ function RouteGuard() {
       await reconcileNativeDownloads().catch(() => {});
       runStartupCleanup();
     })();
+    // Ask once for notification permission (Android 13+) so the headless
+    // share service's progress notifications aren't suppressed by the OS.
+    requestNotificationsIfNeeded().catch(() => {});
     if (hasSeenOnboarding) return;
     if (router.canGoBack()) router.replace("/");
   }, [hasSeenOnboarding, router]);
 
-  // Purge expired downloads whenever the app returns to the foreground, so we
-  // don't rely solely on the OS scheduling the background task.
+  // Reconcile native share downloads and purge expired ones whenever the app
+  // returns to the foreground, so the Queue/History tabs stay fresh without a
+  // full restart and we don't rely solely on the OS background task.
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (state) => {
       if (state === "active") {
-        runStartupCleanup();
+        reconcileNativeDownloads()
+          .catch(() => {})
+          .then(() => runStartupCleanup());
       }
     });
     return () => subscription.remove();

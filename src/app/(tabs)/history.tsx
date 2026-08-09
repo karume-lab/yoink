@@ -1,12 +1,21 @@
-import * as Linking from "expo-linking";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { Alert, FlatList, TouchableOpacity, View } from "react-native";
+import { AppState, FlatList, TouchableOpacity, View } from "react-native";
 import { IconTrash } from "tabler-icons-react-native";
 import { HistoryCard } from "@/components/core/HistoryCard";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
+import { openVideoFile } from "@/features/downloads/services/openVideo";
 import { deleteYoinkAssets } from "@/features/downloads/services/yoinkAlbum";
 import {
   deleteDownload,
@@ -14,6 +23,7 @@ import {
   getAllDownloads,
   searchDownloads,
 } from "@/features/history/services/queries";
+import { reconcileNativeDownloads } from "@/services/NativeDownloadSync";
 import { useDownloadStore } from "@/stores/downloadStore";
 
 type DownloadRow = {
@@ -28,6 +38,8 @@ type DownloadRow = {
 export default function HistoryScreen() {
   const [history, setHistory] = useState<DownloadRow[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<DownloadRow | null>(null);
+  const [deleteAllOpen, setDeleteAllOpen] = useState(false);
 
   const loadHistory = useCallback(async () => {
     try {
@@ -50,8 +62,19 @@ export default function HistoryScreen() {
     loadHistory();
   }, [loadHistory]);
 
-  const handleOpen = (uri: string) => {
-    Linking.openURL(uri).catch(() => {});
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") {
+        reconcileNativeDownloads()
+          .catch(() => {})
+          .then(loadHistory);
+      }
+    });
+    return () => subscription.remove();
+  }, [loadHistory]);
+
+  const handleOpen = (row: DownloadRow) => {
+    openVideoFile(row.localUri, row.assetId);
   };
 
   const removeStoreJobs = (localUris: string[]) => {
@@ -64,68 +87,41 @@ export default function HistoryScreen() {
     }
   };
 
-  const handleDeleteOne = (row: DownloadRow) => {
-    Alert.alert(
-      "Delete download?",
-      "This removes the video from your gallery.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              if (row.assetId) {
-                await deleteYoinkAssets([row.assetId]);
-              }
-            } catch (e) {
-              console.error(e);
-            }
-            try {
-              await deleteDownload(row.id);
-            } catch (e) {
-              console.error(e);
-            }
-            removeStoreJobs([row.localUri]);
-            loadHistory();
-          },
-        },
-      ],
-    );
+  const confirmDeleteOne = async (row: DownloadRow) => {
+    try {
+      if (row.assetId) {
+        await deleteYoinkAssets([row.assetId]);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    try {
+      await deleteDownload(row.id);
+    } catch (e) {
+      console.error(e);
+    }
+    removeStoreJobs([row.localUri]);
+    loadHistory();
   };
 
-  const handleDeleteAll = () => {
-    if (history.length === 0) return;
-    Alert.alert(
-      "Delete all downloads?",
-      `This permanently removes all ${history.length} videos from your gallery. This cannot be undone.`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete All",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              const assetIds = history
-                .map((row) => row.assetId)
-                .filter((id): id is string => !!id);
-              if (assetIds.length > 0) {
-                await deleteYoinkAssets(assetIds);
-              }
-            } catch (e) {
-              console.error(e);
-            }
-            try {
-              await deleteDownloads(history.map((row) => row.id));
-            } catch (e) {
-              console.error(e);
-            }
-            removeStoreJobs(history.map((row) => row.localUri));
-            loadHistory();
-          },
-        },
-      ],
-    );
+  const confirmDeleteAll = async () => {
+    try {
+      const assetIds = history
+        .map((row) => row.assetId)
+        .filter((id): id is string => !!id);
+      if (assetIds.length > 0) {
+        await deleteYoinkAssets(assetIds);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    try {
+      await deleteDownloads(history.map((row) => row.id));
+    } catch (e) {
+      console.error(e);
+    }
+    removeStoreJobs(history.map((row) => row.localUri));
+    loadHistory();
   };
 
   return (
@@ -141,7 +137,7 @@ export default function HistoryScreen() {
       {history.length > 0 && (
         <View className="flex-row justify-end mb-3">
           <TouchableOpacity
-            onPress={handleDeleteAll}
+            onPress={() => setDeleteAllOpen(true)}
             className="flex-row items-center gap-2 p-2 rounded-md bg-popover"
           >
             <Icon as={IconTrash} size={16} className="text-destructive" />
@@ -169,11 +165,67 @@ export default function HistoryScreen() {
             author={item.author ?? undefined}
             filename={item.localUri.split("/").pop() || "video.mp4"}
             coverUrl={item.coverUrl ?? undefined}
-            onOpen={() => handleOpen(item.localUri)}
-            onDelete={() => handleDeleteOne(item)}
+            onOpen={() => handleOpen(item)}
+            onDelete={() => setDeleteTarget(item)}
           />
         )}
       />
+
+      <Dialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete download?</DialogTitle>
+            <DialogDescription>
+              This removes the video from your gallery.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="secondary" onPress={() => setDeleteTarget(null)}>
+              <Text>Cancel</Text>
+            </Button>
+            <Button
+              variant="default"
+              onPress={() => {
+                if (deleteTarget) confirmDeleteOne(deleteTarget);
+                setDeleteTarget(null);
+              }}
+            >
+              <Text>Delete</Text>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={deleteAllOpen} onOpenChange={setDeleteAllOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete all downloads?</DialogTitle>
+            <DialogDescription>
+              This permanently removes all {history.length} videos from your
+              gallery. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="secondary" onPress={() => setDeleteAllOpen(false)}>
+              <Text>Cancel</Text>
+            </Button>
+            <Button
+              variant="default"
+              onPress={() => {
+                setDeleteAllOpen(false);
+                confirmDeleteAll();
+              }}
+            >
+              <Text>Delete All</Text>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </View>
   );
 }

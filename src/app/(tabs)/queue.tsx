@@ -4,6 +4,8 @@ import { useShallow } from "zustand/react/shallow";
 import { DownloadCard } from "@/components/core/DownloadCard";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
+import { processQueue } from "@/features/downloads/services/queue";
+import type { DownloadJob } from "@/features/downloads/types";
 import { useDownloadStore } from "@/stores/downloadStore";
 
 export default function QueueScreen() {
@@ -11,6 +13,16 @@ export default function QueueScreen() {
     useShallow((state) => Object.values(state.jobs)),
   );
   const removeCompleted = useDownloadStore((state) => state.removeCompleted);
+  const updateJob = useDownloadStore((state) => state.updateJob);
+
+  const handleRetry = (job: DownloadJob) => {
+    updateJob(job.id, {
+      status: "queued",
+      progress: 0,
+      error: undefined,
+    });
+    processQueue();
+  };
 
   // Sort: active/error first, completed last, then by ID (which is loosely time based if nanoid, but we could add timestamp)
   const sortedJobs = [...jobs].sort((a, b) => {
@@ -55,6 +67,7 @@ export default function QueueScreen() {
             status={item.status}
             progress={item.progress}
             error={item.error}
+            onRetry={() => handleRetry(item)}
           />
         )}
       />

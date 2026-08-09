@@ -1,5 +1,9 @@
-import { View } from "react-native";
-import { IconAlertTriangle, IconCheck } from "tabler-icons-react-native";
+import { TouchableOpacity, View } from "react-native";
+import {
+  IconAlertTriangle,
+  IconCheck,
+  IconRotateClockwise,
+} from "tabler-icons-react-native";
 import { Card } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
 import { TapeProgress } from "@/components/ui/progress";
@@ -19,6 +23,7 @@ interface DownloadCardProps {
   status: DownloadStatus;
   progress?: number; // 0 to 1
   error?: string;
+  onRetry?: () => void;
 }
 
 export function DownloadCard({
@@ -27,6 +32,7 @@ export function DownloadCard({
   status,
   progress = 0,
   error,
+  onRetry,
 }: DownloadCardProps) {
   const isInFlight = ["queued", "extracting", "downloading", "saving"].includes(
     status,
@@ -47,13 +53,23 @@ export function DownloadCard({
         </Text>
       </View>
 
-      <View className="shrink-0">
+      <View className="flex-row items-center gap-2 shrink-0">
         {isInFlight && <TapeProgress progress={progress} segments={15} />}
         {status === "complete" && (
           <Icon as={IconCheck} className="text-success" />
         )}
         {status === "error" && (
-          <Icon as={IconAlertTriangle} className="text-destructive" />
+          <>
+            <Icon as={IconAlertTriangle} className="text-destructive" />
+            {onRetry && (
+              <TouchableOpacity
+                onPress={onRetry}
+                className="p-2 bg-popover rounded-md active:bg-border"
+              >
+                <Icon as={IconRotateClockwise} className="text-foreground" />
+              </TouchableOpacity>
+            )}
+          </>
         )}
       </View>
     </Card>
