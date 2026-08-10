@@ -59,6 +59,8 @@ export async function processQueue() {
         void showDownloadComplete(
           nextJob.id,
           jobLabel({ ...nextJob, ...extracted }),
+          saved.localUri,
+          saved.assetId,
         );
       }
 

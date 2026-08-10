@@ -69,6 +69,8 @@ async function setupInfrastructure(): Promise<void> {
 export async function showDownloadComplete(
   jobId: string,
   label: string,
+  localUri?: string,
+  assetId?: string | null,
 ): Promise<void> {
   try {
     await configureNotifications();
@@ -81,6 +83,7 @@ export async function showDownloadComplete(
     content: {
       title: "Yoinked!",
       body: `${label} has been yoinked to your phone`,
+      data: { localUri, assetId },
     },
     trigger: triggerForPlatform(),
   }).catch(() => {});

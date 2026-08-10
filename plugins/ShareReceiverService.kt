@@ -127,7 +127,7 @@ class ShareReceiverService : Service() {
     // the next launch (the service runs headless, without the JS runtime).
     recordNativeDownload(extracted, url, savedUri, fileSize)
 
-    notifyDone(label)
+    notifyDone(label, savedUri)
   }
 
   // MARK: - Extraction
@@ -381,13 +381,28 @@ class ShareReceiverService : Service() {
       .build()
   }
 
-  private fun notifyDone(label: String) {
+  private fun notifyDone(label: String, savedUri: Uri?) {
+    val intent = if (savedUri != null) {
+      val viewIntent = Intent(Intent.ACTION_VIEW).apply {
+        setDataAndType(savedUri, "video/mp4")
+        flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK
+      }
+      PendingIntent.getActivity(
+        this,
+        0,
+        viewIntent,
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+      )
+    } else {
+      openAppIntent()
+    }
+
     val notification = NotificationCompat.Builder(this, channelId())
       .setSmallIcon(android.R.drawable.stat_sys_download_done)
       .setContentTitle("Yoinked!")
       .setContentText("$label - yoinked to your phone")
       .setAutoCancel(true)
-      .setContentIntent(openAppIntent())
+      .setContentIntent(intent)
       .build()
     getSystemService(NotificationManager::class.java).notify(DONE_NOTIFICATION_ID, notification)
   }

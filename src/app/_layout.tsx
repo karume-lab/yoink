@@ -9,6 +9,7 @@ import {
 import { PortalHost } from "@rn-primitives/portal";
 import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import { useFonts } from "expo-font";
+import * as Notifications from "expo-notifications";
 import { DarkTheme, Stack, ThemeProvider, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
@@ -17,6 +18,7 @@ import { AppState } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { db } from "@/db/client";
 import migrations from "@/db/migrations/migrations";
+import { openVideoFile } from "@/features/downloads/services/openVideo";
 import {
   BACKGROUND,
   BORDER,
@@ -57,6 +59,21 @@ function RouteGuard() {
   const hasSeenOnboarding = useOnboardingStore(
     (state) => state.hasSeenOnboarding,
   );
+
+  useEffect(() => {
+    const subscription = Notifications.addNotificationResponseReceivedListener(
+      (response) => {
+        const data = response.notification.request.content.data;
+        if (data && typeof data.localUri === "string") {
+          openVideoFile(
+            data.localUri,
+            typeof data.assetId === "string" ? data.assetId : null,
+          );
+        }
+      },
+    );
+    return () => subscription.remove();
+  }, []);
 
   // Not-yet-onboarded users should only ever see the onboarding screen.
   useEffect(() => {
