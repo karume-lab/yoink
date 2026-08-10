@@ -384,8 +384,8 @@ class ShareReceiverService : Service() {
   private fun notifyDone(label: String) {
     val notification = NotificationCompat.Builder(this, channelId())
       .setSmallIcon(android.R.drawable.stat_sys_download_done)
-      .setContentTitle("Download complete")
-      .setContentText("$label - saved to the Yoink album")
+      .setContentTitle("Yoinked!")
+      .setContentText("$label - yoinked to your phone")
       .setAutoCancel(true)
       .setContentIntent(openAppIntent())
       .build()
