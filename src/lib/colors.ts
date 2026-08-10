@@ -1,4 +1,4 @@
-// Design tokens — must match global.css and the Yoink design system.
+// Design tokens - must match global.css and the Yoink design system.
 export const BACKGROUND = "#000000"; // --color-background
 export const CARD = "#0A0A0A"; // --color-card
 export const POPOVER = "#0A0A0A"; // --color-popover

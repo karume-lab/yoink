@@ -26,7 +26,7 @@ export interface NativeDownloadRecord {
 /**
  * Imports downloads performed by the native share service into the JS app:
  * one History row and one completed Queue job per record. The records file is
- * removed once imported, so a launch that fails partway re-imports the rest —
+ * removed once imported, so a launch that fails partway re-imports the rest -
  * the History insert is deduplicated on the record id, and Queue jobs are
  * simply overwritten.
  */
@@ -35,7 +35,7 @@ let reconcileInFlight: Promise<void> | null = null;
 /**
  * Imports downloads performed by the native share service into the JS app:
  * one History row and one completed Queue job per record. The records file is
- * removed once imported, so a launch that fails partway re-imports the rest —
+ * removed once imported, so a launch that fails partway re-imports the rest -
  * the History insert is deduplicated on the record id, and Queue jobs are
  * simply overwritten.
  */
@@ -60,7 +60,7 @@ async function doReconcile(): Promise<void> {
     try {
       recordFile.delete();
     } catch {
-      // Nothing to clear — the file is gone next launch anyway.
+      // Nothing to clear - the file is gone next launch anyway.
     }
     return;
   }

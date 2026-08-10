@@ -78,7 +78,7 @@ export async function processQueue() {
       }
 
       // The download is safely in the gallery and in history, so drop it from
-      // the queue — the Queue tab only tracks in-flight/failed work.
+      // the queue - the Queue tab only tracks in-flight/failed work.
       store.removeJob(nextJob.id);
     } catch (error) {
       const errorMessage =

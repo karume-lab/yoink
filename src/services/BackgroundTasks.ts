@@ -54,7 +54,7 @@ TaskManager.defineTask(YOINK_CLEANUP_TASK, async () => {
 
 // Drives the download queue while the app is suspended, so a share handoff
 // that lands on a queued job keeps downloading without the user staying in
-// the app. Runs opportunistically — iOS schedules it, it isn't on-demand.
+// the app. Runs opportunistically - iOS schedules it, it isn't on-demand.
 TaskManager.defineTask(YOINK_PROCESS_QUEUE_TASK, async () => {
   try {
     await processQueue();

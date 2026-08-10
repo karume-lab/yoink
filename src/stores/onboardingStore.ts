@@ -18,7 +18,7 @@ if (zustandStorage.getItem(ONBOARDED_KEY) === null) {
       zustandStorage.setItem(ONBOARDED_KEY, "true");
     }
   } catch {
-    // Corrupt store — treat as not onboarded.
+    // Corrupt store - treat as not onboarded.
   }
 }
 

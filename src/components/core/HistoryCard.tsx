@@ -45,7 +45,7 @@ export function HistoryCard({
 
       <View className="flex-1 mr-2">
         <Text variant="title" numberOfLines={1}>
-          {author || "Unknown"} — {platform}
+          {author || "Unknown"} - {platform}
         </Text>
         <Text
           variant="mono"

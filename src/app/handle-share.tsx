@@ -53,7 +53,7 @@ export default function HandleShareScreen() {
       >
         {status === "error"
           ? "Yoink couldn't find a link in what was shared. Try sharing the link again."
-          : "Yoink is downloading your media in the background — you can leave now."}
+          : "Yoink is downloading your media in the background - you can leave now."}
       </Text>
       <Button
         variant="secondary"

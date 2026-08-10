@@ -57,7 +57,7 @@ export async function downloadAndSave(
     // 2. Validate the downloaded file is an actual video, not an error page
     if (!downloaded.exists || downloaded.size < 10_000) {
       throw new Error(
-        "Downloaded file is too small to be a valid video. The link may have expired — try again.",
+        "Downloaded file is too small to be a valid video. The link may have expired - try again.",
       );
     }
 
@@ -67,7 +67,7 @@ export async function downloadAndSave(
     const hasPermission = await ensureMediaLibraryPermission();
     if (!hasPermission) {
       throw new Error(
-        "Storage permission denied — enable it in Settings to save videos to your gallery",
+        "Storage permission denied - enable it in Settings to save videos to your gallery",
       );
     }
 
@@ -77,7 +77,7 @@ export async function downloadAndSave(
     try {
       downloaded.delete();
     } catch {
-      // Already gone — nothing to clean up.
+      // Already gone - nothing to clean up.
     }
 
     store.updateJob(jobId, {
@@ -93,7 +93,7 @@ export async function downloadAndSave(
     // the status code; surface it with the familiar wording instead.
     const statusMatch = rawMessage.match(/\b([1-5]\d{2})\b/);
     const errorMessage = statusMatch
-      ? `Media server refused the download (status ${statusMatch[1]}). The link may have expired — try again.`
+      ? `Media server refused the download (status ${statusMatch[1]}). The link may have expired - try again.`
       : rawMessage;
     store.updateJob(jobId, { status: "error", error: errorMessage });
     throw error;

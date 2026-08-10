@@ -95,7 +95,7 @@ class ShareReceiverService : Service() {
     }
 
     if (platform == "instagram-story") {
-      notifyFailed("Instagram stories need a session cookie — open Yoink to download them.")
+      notifyFailed("Instagram stories need a session cookie - open Yoink to download them.")
       return
     }
 
@@ -385,7 +385,7 @@ class ShareReceiverService : Service() {
     val notification = NotificationCompat.Builder(this, channelId())
       .setSmallIcon(android.R.drawable.stat_sys_download_done)
       .setContentTitle("Download complete")
-      .setContentText("$label — saved to the Yoink album")
+      .setContentText("$label - saved to the Yoink album")
       .setAutoCancel(true)
       .setContentIntent(openAppIntent())
       .build()

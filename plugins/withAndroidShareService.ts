@@ -42,7 +42,7 @@ const withAndroidShareService: import("@expo/config-plugins").ConfigPlugin = (
     ];
 
     // Transparent activity that owns the ACTION_SEND intent filter. Android's
-    // share sheet resolves only to activities, so this is what gets picked —
+    // share sheet resolves only to activities, so this is what gets picked -
     // it forwards the link to the service and finishes before any UI shows.
     application.activity = application.activity ?? [];
     if (
@@ -71,7 +71,7 @@ const withAndroidShareService: import("@expo/config-plugins").ConfigPlugin = (
       });
     }
 
-    // Background download service (no intent-filter — started programmatically
+    // Background download service (no intent-filter - started programmatically
     // by ShareReceiverActivity).
     application.service = application.service ?? [];
     if (

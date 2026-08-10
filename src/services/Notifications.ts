@@ -1,8 +1,6 @@
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
-
-const DOWNLOAD_CHANNEL_ID = "downloads";
-const NOTIFICATION_PREFIX = "yoink-download";
+import { DOWNLOAD_CHANNEL_ID, NOTIFICATION_PREFIX } from "@/lib/constants";
 
 let configured = false;
 
@@ -81,8 +79,8 @@ export async function showDownloadComplete(
   await Notifications.scheduleNotificationAsync({
     identifier: notificationId(jobId),
     content: {
-      title: "Download complete",
-      body: `${label} — saved to the Yoink album`,
+      title: "Yoinked!",
+      body: `${label} has been yoinked to your phone`,
     },
     trigger: triggerForPlatform(),
   }).catch(() => {});

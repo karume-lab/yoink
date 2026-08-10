@@ -42,7 +42,7 @@ export function DownloadCard({
     <Card className="flex-row items-center justify-between p-3 py-3 gap-0 shadow-none">
       <View className="flex-1 mr-4">
         <Text variant="title" numberOfLines={1}>
-          {author || "Unknown"} — {platform}
+          {author || "Unknown"} - {platform}
         </Text>
         <Text
           variant="mono"

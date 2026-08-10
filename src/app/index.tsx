@@ -61,7 +61,7 @@ const SLIDES: OnboardingSlide[] = [
     id: "notifications",
     title: "Know the moment it lands.",
     description:
-      "Yoink downloads in the background — even from a share, without opening the app. Notifications tell you when your video is saved.",
+      "Yoink downloads in the background - even from a share, without opening the app. Notifications tell you when your video is saved.",
     type: "notifications",
     icon: IconBell,
   },
@@ -244,7 +244,7 @@ const OnboardingScreen: React.FC = () => {
       if (slide.type === "notifications") {
         permissionLockRef.current = currentIndex;
         const granted = await configureNotifications();
-        // Restore scroll position and snap dots back — the system dialog can
+        // Restore scroll position and snap dots back - the system dialog can
         // momentarily shift the FlatList, leaving scrollX at a stale offset.
         flatListRef.current?.scrollToIndex({
           index: currentIndex,

@@ -10,7 +10,7 @@ const PERMISSION_CONTENT: Record<
   { why: string; without: string; grantedLabel: string }
 > = {
   notifications: {
-    why: "Notifications tell you the moment a download finishes — even when you shared a link without opening Yoink.",
+    why: "Notifications tell you the moment a download finishes - even when you shared a link without opening Yoink.",
     without:
       "Without them, you'll have to keep checking the Queue tab to see if your download is done.",
     grantedLabel: "Notifications enabled",
