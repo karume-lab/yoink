@@ -33,7 +33,7 @@ export default function AboutScreen() {
       showsVerticalScrollIndicator={false}
     >
       <View className="items-center mb-8">
-        <View className="size-20 rounded-2xl bg-primary/15 items-center justify-center mb-4">
+        <View className="size-20 rounded-2xl bg-white/10 items-center justify-center mb-4">
           <Image
             source={require("@/../assets/images/icon.png")}
             className="w-full h-full rounded-2xl"
@@ -78,7 +78,7 @@ export default function AboutScreen() {
           className="flex-row items-center justify-between p-5 border-b border-border/10"
         >
           <View className="flex-row items-center gap-4">
-            <View className="size-10 rounded-md bg-primary/10 items-center justify-center">
+            <View className="size-10 rounded-md bg-white/5 items-center justify-center">
               <Icon as={IconWorld} className="text-primary" size={20} />
             </View>
             <View>
@@ -98,7 +98,7 @@ export default function AboutScreen() {
           className="flex-row items-center justify-between p-5 border-b border-border/10"
         >
           <View className="flex-row items-center gap-4">
-            <View className="size-10 rounded-md bg-primary/10 items-center justify-center">
+            <View className="size-10 rounded-md bg-white/5 items-center justify-center">
               <GithubIcon color={PRIMARY} size={20} />
             </View>
             <View>
@@ -116,7 +116,7 @@ export default function AboutScreen() {
           className="flex-row items-center justify-between p-5 border-b border-border/10"
         >
           <View className="flex-row items-center gap-4">
-            <View className="size-10 rounded-md bg-primary/10 items-center justify-center">
+            <View className="size-10 rounded-md bg-white/5 items-center justify-center">
               <LinkedinIcon color={PRIMARY} size={20} />
             </View>
             <View>
@@ -136,7 +136,7 @@ export default function AboutScreen() {
           className="flex-row items-center justify-between p-5"
         >
           <View className="flex-row items-center gap-4">
-            <View className="size-10 rounded-md bg-primary/10 items-center justify-center">
+            <View className="size-10 rounded-md bg-white/5 items-center justify-center">
               <TwitterIcon color={PRIMARY} size={20} />
             </View>
             <View>

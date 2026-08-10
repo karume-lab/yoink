@@ -77,7 +77,9 @@ export async function processQueue() {
         console.error("Failed to persist download to history:", error);
       }
 
-      // Successfully completed, process next
+      // The download is safely in the gallery and in history, so drop it from
+      // the queue — the Queue tab only tracks in-flight/failed work.
+      store.removeJob(nextJob.id);
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";

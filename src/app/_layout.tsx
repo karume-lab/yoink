@@ -66,10 +66,12 @@ function RouteGuard() {
       await reconcileNativeDownloads().catch(() => {});
       runStartupCleanup();
     })();
-    // Ask once for notification permission (Android 13+) so the headless
-    // share service's progress notifications aren't suppressed by the OS.
-    requestNotificationsIfNeeded().catch(() => {});
-    if (hasSeenOnboarding) return;
+    if (hasSeenOnboarding) {
+      // One-time prompt for users who onboarded before notifications were an
+      // onboarding step; new users are asked on step 2 of onboarding.
+      requestNotificationsIfNeeded().catch(() => {});
+      return;
+    }
     if (router.canGoBack()) router.replace("/");
   }, [hasSeenOnboarding, router]);
 

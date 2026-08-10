@@ -39,7 +39,7 @@ const buttonTextVariants = cva(
 	{
 		variants: {
 			variant: {
-				default: "text-primary-foreground", // dark text on copper fill
+				default: "text-primary-foreground",
 				secondary: "text-secondary-foreground",
 				ghost: "text-foreground",
 			},
