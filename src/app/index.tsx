@@ -21,6 +21,7 @@ import Animated, {
   useSharedValue,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { scheduleOnUI } from "react-native-worklets";
 import type { TablerIcon } from "tabler-icons-react-native";
 import {
   IconBell,
@@ -243,9 +244,15 @@ const OnboardingScreen: React.FC = () => {
       if (slide.type === "notifications") {
         permissionLockRef.current = currentIndex;
         const granted = await configureNotifications();
+        // Restore scroll position and snap dots back — the system dialog can
+        // momentarily shift the FlatList, leaving scrollX at a stale offset.
         flatListRef.current?.scrollToIndex({
           index: currentIndex,
           animated: false,
+        });
+        const lockedIndex = currentIndex;
+        scheduleOnUI(() => {
+          scrollX.value = lockedIndex * width;
         });
         permissionLockRef.current = null;
         setPermissions((prev) => ({ ...prev, notifications: granted }));
@@ -253,9 +260,14 @@ const OnboardingScreen: React.FC = () => {
       } else if (slide.type === "gallery") {
         permissionLockRef.current = currentIndex;
         const permission = await MediaLibrary.requestPermissionsAsync(false);
+        // Restore scroll position and snap dots back.
         flatListRef.current?.scrollToIndex({
           index: currentIndex,
           animated: false,
+        });
+        const lockedIndex = currentIndex;
+        scheduleOnUI(() => {
+          scrollX.value = lockedIndex * width;
         });
         permissionLockRef.current = null;
         setPermissions((prev) => ({ ...prev, gallery: permission.granted }));
