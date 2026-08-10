@@ -1,8 +1,5 @@
 import * as MediaLibrary from "expo-media-library";
-import * as LegacyMediaLibrary from "expo-media-library/legacy";
-import { Platform } from "react-native";
-
-export const YOINK_ALBUM_NAME = "Yoink";
+import { YOINK_ALBUM_NAME } from "@/lib/constants";
 
 export interface SavedMedia {
   assetId: string;
@@ -38,20 +35,18 @@ export async function saveToYoinkAlbum(filePath: string): Promise<SavedMedia> {
 /**
  * Removes assets from the Yoink album and the media store.
  *
- * On Android 11+ (API 30+) the legacy `deleteAssetsAsync` uses a raw
- * `contentResolver.delete()` call — no per-file confirm dialog — and only
- * deletes assets the app itself owns (i.e. assets it created).
- * On iOS the system always shows a confirmation dialog; this is acceptable.
- * If the asset ID is a content URI, it is resolved to the numeric `_ID` first.
+ * Uses the modern expo-media-library Asset.delete API. On Android 11+
+ * this launches the system's per-file "allow delete" confirmation dialog.
+ * If the asset ID is a content URI, it is resolved to the numeric `_ID` first
+ * so the Asset constructor can resolve it correctly.
  */
 export async function deleteYoinkAssets(assetIds: string[]): Promise<void> {
-  const valid = assetIds.map((id) => id).filter((id) => id.length > 0);
+  const valid = assetIds.filter((id) => id.length > 0);
   if (valid.length === 0) return;
 
-  // Convert content URI to the numeric MediaStore `_ID`.
-  // Only older native-share records stored the numeric id; newer records
-  // already stored the full content URI. Both formats work with the
-  // legacy deleteAssetsAsync on Android.
+  // Convert content URI to the numeric MediaStore `_ID` so MediaLibrary.Asset
+  // can resolve it. Older native-share records stored the numeric id;
+  // newer records store the full content URI.
   const numericIds = valid.map((id) => {
     if (id.startsWith("content://")) {
       const last = id.split("/").pop() ?? "";
@@ -60,25 +55,10 @@ export async function deleteYoinkAssets(assetIds: string[]): Promise<void> {
     return id;
   });
 
-  if (Platform.OS === "android") {
-    // Android 11+ (API 30+) — no per-file system confirm dialog.
-    // Assets are deleted one at a time to avoid failing the whole batch.
-    for (const id of numericIds) {
-      try {
-        await LegacyMediaLibrary.deleteAssetsAsync([id]);
-      } catch (error) {
-        console.warn(`Skipping asset ${id} (already deleted?):`, error);
-      }
-    }
-    return;
-  }
-
-  // iOS always shows a confirmation dialog per batch, which is expected.
-  // iOS also uses the asset ID that is the same format as the legacy
-  // `deleteAssetsAsync` on this platform.
-  for (const id of valid) {
+  // Delete one at a time so a stale id doesn't fail the whole batch.
+  for (const id of numericIds) {
     try {
-      await LegacyMediaLibrary.deleteAssetsAsync([id]);
+      await MediaLibrary.Asset.delete([new MediaLibrary.Asset(id)]);
     } catch (error) {
       console.warn(`Skipping asset ${id} (already deleted?):`, error);
     }

@@ -6,3 +6,5 @@ export const PORTFOLIO_URL = "https://karume.vercel.app";
 export const GITHUB_URL = "https://github.com/Karume-lab";
 export const LINKEDIN_URL = "https://linkedin.com/in/daniel-karume";
 export const TWITTER_URL = "https://twitter.com/karume_lab";
+
+export const YOINK_ALBUM_NAME = "Yoink";
