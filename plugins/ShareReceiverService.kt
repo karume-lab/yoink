@@ -99,7 +99,7 @@ class ShareReceiverService : Service() {
       return
     }
 
-    updateForeground("Downloading video", "Extracting…", 0)
+    updateForeground("Downloading video", "Extracting…")
 
     val extracted = when {
       platform == "tiktok" -> extractTikTok(url)
@@ -255,27 +255,9 @@ class ShareReceiverService : Service() {
     }
 
     val dest = File(cacheDir, filename)
-    val total = response.body?.contentLength() ?: 0L
     response.body?.let { body ->
       val input = body.byteStream()
-      val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
-      var read = input.read(buffer)
-      var written = 0L
-      var lastPercent = -1
-      dest.outputStream().use { output ->
-        while (read != -1) {
-          output.write(buffer, 0, read)
-          written += read
-          if (total > 0) {
-            val percent = ((written * 100) / total).toInt().coerceIn(0, 100)
-            if (percent != lastPercent) {
-              lastPercent = percent
-              updateForeground("Downloading video", "$percent%", percent)
-            }
-          }
-          read = input.read(buffer)
-        }
-      }
+      dest.outputStream().use { output -> input.copyTo(output) }
       response.close()
     }
 
@@ -334,7 +316,9 @@ class ShareReceiverService : Service() {
       put("sourceUrl", sourceUrl)
       put("author", extracted.author ?: JSONObject.NULL)
       put("localUri", savedUri.toString())
-      put("assetId", savedUri.lastPathSegment ?: savedUri.toString())
+      // The full content URI, so the JS app can re-instantiate the MediaStore
+      // asset and delete it from the gallery. A bare numeric id is not enough.
+      put("assetId", savedUri.toString())
       put("fileSize", fileSize)
       put("createdAt", System.currentTimeMillis())
     }
@@ -373,7 +357,7 @@ class ShareReceiverService : Service() {
 
   private fun startAsForeground() {
     ensureChannel()
-    val notification = buildNotification("Downloading", "Preparing…", indeterminate = true)
+    val notification = buildNotification("Downloading", "Preparing…")
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
       startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
     } else {
@@ -381,24 +365,18 @@ class ShareReceiverService : Service() {
     }
   }
 
-  private fun updateForeground(title: String, text: String, progress: Int) {
-    val notification = buildNotification(title, text, progress = progress)
+  private fun updateForeground(title: String, text: String) {
+    val notification = buildNotification(title, text)
     getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, notification)
   }
 
-  private fun buildNotification(
-    title: String,
-    text: String,
-    progress: Int = 0,
-    indeterminate: Boolean = false,
-  ): Notification {
+  private fun buildNotification(title: String, text: String): Notification {
     return NotificationCompat.Builder(this, channelId())
       .setSmallIcon(android.R.drawable.stat_sys_download)
       .setContentTitle(title)
       .setContentText(text)
       .setOnlyAlertOnce(true)
       .setOngoing(true)
-      .setProgress(100, progress, indeterminate)
       .setContentIntent(openAppIntent())
       .build()
   }
@@ -411,7 +389,7 @@ class ShareReceiverService : Service() {
       .setAutoCancel(true)
       .setContentIntent(openAppIntent())
       .build()
-    getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, notification)
+    getSystemService(NotificationManager::class.java).notify(DONE_NOTIFICATION_ID, notification)
   }
 
   private fun notifyFailed(message: String) {
@@ -422,7 +400,7 @@ class ShareReceiverService : Service() {
       .setAutoCancel(true)
       .setContentIntent(openAppIntent())
       .build()
-    getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, notification)
+    getSystemService(NotificationManager::class.java).notify(DONE_NOTIFICATION_ID, notification)
   }
 
   private fun openAppIntent(): PendingIntent {
@@ -483,6 +461,7 @@ class ShareReceiverService : Service() {
     const val TAG = "ShareReceiverService"
     const val CHANNEL_ID = "downloads"
     const val NOTIFICATION_ID = 1001
+    const val DONE_NOTIFICATION_ID = 1002
     const val NATIVE_DOWNLOADS_FILE = "native-downloads.json"
     const val MOBILE_UA =
       "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"

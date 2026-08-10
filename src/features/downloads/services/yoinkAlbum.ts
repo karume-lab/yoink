@@ -33,8 +33,22 @@ export async function saveToYoinkAlbum(filePath: string): Promise<SavedMedia> {
   return { assetId: asset.id, localUri };
 }
 
+/**
+ * Resolves a stored asset id to a MediaStore content URI. Newer records store
+ * the full content URI directly, but older native share records only stored
+ * the numeric MediaStore `_ID` (e.g. `12345`), which `MediaLibrary.Asset`
+ * cannot resolve on its own.
+ */
+function toContentUri(id: string): string {
+  if (id.startsWith("content://")) return id;
+  if (/^\d+$/.test(id)) {
+    return `content://media/external/video/media/${id}`;
+  }
+  return id;
+}
+
 export async function deleteYoinkAssets(assetIds: string[]): Promise<void> {
-  const valid = assetIds.filter((id) => id.length > 0);
+  const valid = assetIds.map(toContentUri).filter((id) => id.length > 0);
   if (valid.length === 0) return;
 
   // Delete one at a time so a stale id (already removed from the gallery, or

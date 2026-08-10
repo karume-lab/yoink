@@ -6,7 +6,6 @@ import { insertDownload } from "@/features/history/services/queries";
 import {
   showDownloadComplete,
   showDownloadFailed,
-  showDownloadProgress,
 } from "@/services/Notifications";
 import { useDownloadStore } from "@/stores/downloadStore";
 
@@ -36,10 +35,6 @@ export async function processQueue() {
     try {
       store.updateJob(nextJob.id, { status: "extracting", progress: 0 });
 
-      if (nextJob.notify) {
-        void showDownloadProgress(nextJob.id, "Preparing", 0);
-      }
-
       const extracted = await extractMedia(nextJob.sourceUrl);
 
       store.updateJob(nextJob.id, {
@@ -58,11 +53,6 @@ export async function processQueue() {
         filename,
         extracted.platform,
         extracted.cookies,
-        nextJob.notify
-          ? (progress) => {
-              showDownloadProgress(nextJob.id, "Downloading video", progress);
-            }
-          : undefined,
       );
 
       if (nextJob.notify) {

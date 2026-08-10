@@ -5,7 +5,6 @@ const DOWNLOAD_CHANNEL_ID = "downloads";
 const NOTIFICATION_PREFIX = "yoink-download";
 
 let configured = false;
-const lastProgress: Record<string, { at: number; percent: number }> = {};
 
 function notificationId(jobId: string): string {
   return `${NOTIFICATION_PREFIX}-${jobId}`;
@@ -34,8 +33,8 @@ export async function configureNotifications(): Promise<boolean> {
 
 /**
  * Sets up the notification handler/channel and requests POST_NOTIFICATIONS
- * only when the user has never been asked (Android 13+), so a foreground
- * share download can show its progress without nagging on every launch.
+ * only when the user has never been asked (Android 13+), so download
+ * completion notifications aren't suppressed by the OS.
  */
 export async function requestNotificationsIfNeeded(): Promise<boolean> {
   await setupInfrastructure();
@@ -69,43 +68,6 @@ async function setupInfrastructure(): Promise<void> {
   configured = true;
 }
 
-export async function showDownloadProgress(
-  jobId: string,
-  label: string,
-  progress: number,
-): Promise<void> {
-  try {
-    await configureNotifications();
-  } catch {
-    return;
-  }
-
-  const now = Date.now();
-  const percent = Math.floor(progress * 100);
-  const previous = lastProgress[jobId];
-
-  // Throttle updates: at most once per second, and only when the progress
-  // has moved by at least 10%, so background downloads don't spam the tray.
-  if (
-    previous &&
-    now - previous.at < 1000 &&
-    percent - previous.percent < 10 &&
-    percent < 100
-  ) {
-    return;
-  }
-  lastProgress[jobId] = { at: now, percent };
-
-  await Notifications.scheduleNotificationAsync({
-    identifier: notificationId(jobId),
-    content: {
-      title: "Downloading",
-      body: `${label} — ${percent}%`,
-    },
-    trigger: triggerForPlatform(),
-  }).catch(() => {});
-}
-
 export async function showDownloadComplete(
   jobId: string,
   label: string,
@@ -116,7 +78,6 @@ export async function showDownloadComplete(
     return;
   }
 
-  delete lastProgress[jobId];
   await Notifications.scheduleNotificationAsync({
     identifier: notificationId(jobId),
     content: {
@@ -137,7 +98,6 @@ export async function showDownloadFailed(
     return;
   }
 
-  delete lastProgress[jobId];
   await Notifications.scheduleNotificationAsync({
     identifier: notificationId(jobId),
     content: {
