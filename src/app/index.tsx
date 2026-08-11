@@ -4,7 +4,6 @@ import { useRouter } from "expo-router";
 import type React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  AppState,
   type FlatList,
   type GestureResponderEvent,
   PanResponder,
@@ -27,7 +26,6 @@ import type { TablerIcon } from "tabler-icons-react-native";
 import {
   IconBell,
   IconCloudDownload,
-  IconFloatRight,
   IconPhoto,
 } from "tabler-icons-react-native";
 import { Button } from "@/components/ui/button";
@@ -38,11 +36,6 @@ import {
 } from "@/features/onboarding/components/PermissionSlide";
 import { WelcomeSlide } from "@/features/onboarding/components/WelcomeSlide";
 import { PRIMARY } from "@/lib/colors";
-import {
-  hasOverlayPermission,
-  requestOverlayPermission,
-  startFloatingBubble,
-} from "@/services/FloatingBubble";
 import { configureNotifications } from "@/services/Notifications";
 import { useOnboardingStore } from "@/stores/onboardingStore";
 
@@ -79,14 +72,6 @@ const SLIDES: OnboardingSlide[] = [
       "Downloads go into a Yoink album in your gallery, ready for your WhatsApp status or anywhere else.",
     type: "gallery",
     icon: IconPhoto,
-  },
-  {
-    id: "bubble",
-    title: "Download over any app.",
-    description:
-      "A floating Yoink bubble hovers over TikTok. Copy a link inside TikTok, then tap the bubble to download it without leaving the app.",
-    type: "bubble",
-    icon: IconFloatRight,
   },
 ];
 
@@ -150,7 +135,7 @@ const OnboardingScreen: React.FC = () => {
   const [busy, setBusy] = useState(false);
   const [permissions, setPermissions] = useState<
     Record<PermissionSlideType, boolean>
-  >({ notifications: false, gallery: false, bubble: false });
+  >({ notifications: false, gallery: false });
   const { completeOnboarding } = useOnboardingStore();
 
   // Pre-check permissions on mount so an already-granted permission is
@@ -172,27 +157,7 @@ const OnboardingScreen: React.FC = () => {
       } catch {
         // ignore
       }
-      try {
-        const granted = await hasOverlayPermission();
-        setPermissions((prev) => ({ ...prev, bubble: granted }));
-      } catch {
-        // ignore
-      }
     })();
-  }, []);
-
-  // The overlay permission is granted in Android's Settings, so the app loses
-  // focus to get it. Refresh the slide state whenever the user comes back.
-  useEffect(() => {
-    const subscription = AppState.addEventListener("change", (state) => {
-      if (state !== "active") return;
-      hasOverlayPermission()
-        .then((granted) =>
-          setPermissions((prev) => ({ ...prev, bubble: granted })),
-        )
-        .catch(() => {});
-    });
-    return () => subscription.remove();
   }, []);
 
   const scrollHandler = useAnimatedScrollHandler({
@@ -222,8 +187,6 @@ const OnboardingScreen: React.FC = () => {
         return permissions.notifications;
       case "gallery":
         return permissions.gallery;
-      case "bubble":
-        return permissions.bubble;
       default:
         return true;
     }
@@ -268,9 +231,6 @@ const OnboardingScreen: React.FC = () => {
 
   const handleFinishOnboarding = async () => {
     completeOnboarding();
-    if (permissions.bubble) {
-      startFloatingBubble();
-    }
     router.replace("/(tabs)");
   };
 
@@ -312,18 +272,6 @@ const OnboardingScreen: React.FC = () => {
         permissionLockRef.current = null;
         setPermissions((prev) => ({ ...prev, gallery: permission.granted }));
         if (!permission.granted) return;
-      } else if (slide.type === "bubble") {
-        // The overlay permission is granted in Android's Settings, which
-        // suspends the app. If it isn't granted yet, open Settings and wait
-        // for the user to come back and tap Next again.
-        permissionLockRef.current = currentIndex;
-        const granted = await hasOverlayPermission();
-        permissionLockRef.current = null;
-        setPermissions((prev) => ({ ...prev, bubble: granted }));
-        if (!granted) {
-          requestOverlayPermission();
-          return;
-        }
       }
 
       if (currentIndex < SLIDES.length - 1) {

@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/brand-icons";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
-import { FloatingBubbleCard } from "@/features/settings/components/FloatingBubbleCard";
 import { PRIMARY } from "@/lib/colors";
 import {
   GITHUB_URL,
@@ -56,11 +55,6 @@ export default function AboutScreen() {
           device. It processes everything locally on your device.
         </Text>
       </View>
-
-      <Text className="text-sm font-semibold text-muted-foreground mb-4 uppercase tracking-wider">
-        Download Over Any App
-      </Text>
-      <FloatingBubbleCard />
 
       <Text className="text-sm font-semibold text-muted-foreground mb-4 uppercase tracking-wider">
         Developer

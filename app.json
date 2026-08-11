@@ -58,7 +58,6 @@
       "expo-background-task",
       "expo-task-manager",
       "./plugins/withAndroidShareService.ts",
-      "./plugins/withFloatingBubble.ts",
       "./plugins/withArmOnly.ts",
       [
         "expo-build-properties",
