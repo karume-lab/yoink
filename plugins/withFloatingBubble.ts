@@ -9,6 +9,7 @@ const path = require("node:path");
 const {
   withMainApplication,
   withAndroidManifest,
+  withAndroidStyles,
   withDangerousMod,
   AndroidConfig,
 } = require("@expo/config-plugins") as typeof import("@expo/config-plugins");
@@ -18,10 +19,24 @@ const PACKAGE_PATH = ["com", "karumelab", "yoink"];
 const SERVICE_NAME = ".FloatingBubbleService";
 const ACTIVITY_NAME = ".BubbleActivity";
 
+// Fully transparent theme for BubbleActivity: nothing ever renders, and the
+// window background is transparent so opening the activity doesn't flash black
+// over the app the user is in.
+const BUBBLE_THEME = "YoinkBubbleTheme";
+const BUBBLE_THEME_PARENT = "@android:style/Theme.Translucent.NoTitleBar";
+const BUBBLE_THEME_ITEMS: Record<string, string> = {
+  "android:windowIsTranslucent": "true",
+  "android:windowBackground": "@android:color/transparent",
+  "android:windowNoTitle": "true",
+  "android:backgroundDimEnabled": "false",
+  "android:windowContentOverlay": "@null",
+};
+
 const PERMISSIONS = [
   "android.permission.SYSTEM_ALERT_WINDOW",
   "android.permission.FOREGROUND_SERVICE",
   "android.permission.FOREGROUND_SERVICE_SPECIAL_USE",
+  "android.permission.VIBRATE",
 ];
 
 const KOTLIN_SOURCES = [
@@ -67,7 +82,7 @@ const withFloatingBubble: import("@expo/config-plugins").ConfigPlugin = (
           "android:launchMode": "singleTop",
           "android:noHistory": "true",
           "android:excludeFromRecents": "true",
-          "android:theme": "@android:style/Theme.Translucent.NoTitleBar",
+          "android:theme": `@style/${BUBBLE_THEME}`,
         },
       });
     }
@@ -109,6 +124,23 @@ const withFloatingBubble: import("@expo/config-plugins").ConfigPlugin = (
           `${anchor}\n          ${replacement}`,
         );
       }
+    }
+    return config;
+  });
+
+  // Define the transparent theme BubbleActivity uses so opening it doesn't
+  // flash black over the app the user is in.
+  config = withAndroidStyles(config, (config) => {
+    for (const [name, value] of Object.entries(BUBBLE_THEME_ITEMS)) {
+      config.modResults = AndroidConfig.Styles.assignStylesValue(
+        config.modResults,
+        {
+          add: true,
+          value,
+          name,
+          parent: { name: BUBBLE_THEME, parent: BUBBLE_THEME_PARENT },
+        },
+      );
     }
     return config;
   });

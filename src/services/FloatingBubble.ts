@@ -5,7 +5,7 @@ interface YoinkOverlayModule {
   stopBubble(): void;
   isBubbleActive(): Promise<boolean>;
   hasOverlayPermission(): Promise<boolean>;
-  openOverlayPermissionSettings(): void;
+  requestOverlayPermission(): void;
 }
 
 const module = (NativeModules as { YoinkOverlay?: YoinkOverlayModule })
@@ -42,6 +42,8 @@ export async function hasOverlayPermission(): Promise<boolean> {
   }
 }
 
-export function openOverlayPermissionSettings(): void {
-  module?.openOverlayPermissionSettings();
+// Opens the overlay permission screen and brings the user back to the app
+// automatically once the permission is granted.
+export function requestOverlayPermission(): void {
+  module?.requestOverlayPermission();
 }

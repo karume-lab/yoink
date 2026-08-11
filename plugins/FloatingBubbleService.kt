@@ -15,6 +15,8 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.provider.Settings
 import android.util.DisplayMetrics
 import android.view.Gravity
@@ -35,6 +37,9 @@ class FloatingBubbleService : Service() {
 
   private var windowManager: WindowManager? = null
   private var bubbleView: View? = null
+  private var dimmed = false
+  private val idleHandler = Handler(Looper.getMainLooper())
+  private val dimBubble = Runnable { setDimmed(true) }
 
   override fun onBind(intent: Intent?): IBinder? = null
 
@@ -53,6 +58,7 @@ class FloatingBubbleService : Service() {
   }
 
   override fun onDestroy() {
+    idleHandler.removeCallbacksAndMessages(null)
     removeBubble()
     isRunning = false
     stopForeground(STOP_FOREGROUND_REMOVE)
@@ -80,12 +86,13 @@ class FloatingBubbleService : Service() {
     val iconView = ImageView(this).apply {
       setImageDrawable(packageManager.getApplicationIcon(packageName))
       scaleType = ImageView.ScaleType.FIT_CENTER
-      setPadding(dp(12), dp(12), dp(12), dp(12))
+      setPadding(dp(10), dp(10), dp(10), dp(10))
       clipToOutline = true
       elevation = dp(12).toFloat()
       background = GradientDrawable().apply {
-        shape = GradientDrawable.OVAL
+        shape = GradientDrawable.RECTANGLE
         setColor(BUBBLE_BG)
+        setCornerRadius(dp(14).toFloat())
         setStroke(dp(1), Color.argb(64, 255, 255, 255))
       }
       contentDescription = "Yoink floating bubble"
@@ -113,6 +120,7 @@ class FloatingBubbleService : Service() {
     try {
       wm.addView(iconView, params)
       bubbleView = iconView
+      scheduleDim()
     } catch (t: Throwable) {
       stopSelf()
     }
@@ -125,7 +133,8 @@ class FloatingBubbleService : Service() {
     }
   }
 
-  // Drag to reposition, tap to yoink the copied link, long-press to dismiss.
+  // Drag to reposition, tap to yoink the copied link, long-press to dismiss
+  // (with a haptic buzz as confirmation).
   private fun attachDragAndTap(
     view: View,
     params: WindowManager.LayoutParams,
@@ -134,7 +143,10 @@ class FloatingBubbleService : Service() {
     size: Int,
   ) {
     val handler = Handler(Looper.getMainLooper())
-    val longPress = Runnable { stopSelf() }
+    val longPress = Runnable {
+      vibrate()
+      stopSelf()
+    }
     var downRawX = 0f
     var downRawY = 0f
     var moved = false
@@ -145,6 +157,8 @@ class FloatingBubbleService : Service() {
           downRawX = event.rawX
           downRawY = event.rawY
           moved = false
+          setDimmed(false)
+          scheduleDim()
           handler.postDelayed(longPress, LONG_PRESS_MS)
           true
         }
@@ -172,6 +186,36 @@ class FloatingBubbleService : Service() {
           true
         }
         else -> false
+      }
+    }
+  }
+
+  // Dims to a ghost after a stretch of no interaction, so it stops competing
+  // with the content behind it. Touching it wakes it back up.
+  private fun scheduleDim() {
+    idleHandler.removeCallbacksAndMessages(null)
+    idleHandler.postDelayed(dimBubble, IDLE_DIM_MS)
+  }
+
+  private fun setDimmed(dim: Boolean) {
+    if (dimmed == dim) return
+    dimmed = dim
+    bubbleView?.animate()?.alpha(if (dim) DIM_ALPHA else 1f)
+      ?.setDuration(if (dim) 400L else 200L)
+      ?.start()
+  }
+
+  private fun vibrate() {
+    runCatching {
+      val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator?
+        ?: return
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        vibrator.vibrate(
+          VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE),
+        )
+      } else {
+        @Suppress("DEPRECATION")
+        vibrator.vibrate(50)
       }
     }
   }
@@ -242,6 +286,8 @@ class FloatingBubbleService : Service() {
     const val CHANNEL_ID = "floating-bubble"
     const val NOTIFICATION_ID = 2001
     const val LONG_PRESS_MS = 900L
+    const val IDLE_DIM_MS = 12_000L
+    const val DIM_ALPHA = 0.35f
     const val BUBBLE_BG = 0xFF18181B.toInt()
 
     @Volatile

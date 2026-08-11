@@ -1,8 +1,11 @@
 package com.karumelab.yoink
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
@@ -46,8 +49,13 @@ class YoinkOverlayModule(reactContext: ReactApplicationContext) :
     promise.resolve(Settings.canDrawOverlays(reactApplicationContext))
   }
 
+  /**
+   * Opens the "Display over other apps" screen and watches for the grant. The
+   * moment it lands the app is brought back to the front, so the user never
+   * has to navigate back to Yoink themselves.
+   */
   @ReactMethod
-  fun openOverlayPermissionSettings() {
+  fun requestOverlayPermission() {
     val context = reactApplicationContext
     val intent = Intent(
       Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
@@ -55,10 +63,47 @@ class YoinkOverlayModule(reactContext: ReactApplicationContext) :
     ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     if (intent.resolveActivity(context.packageManager) != null) {
       context.startActivity(intent)
+      pollForOverlayGrant()
     }
+  }
+
+  private fun pollForOverlayGrant() {
+    pollHandler.removeCallbacksAndMessages(null)
+    pollHandler.post(
+      object : Runnable {
+        var attempts = 0
+        override fun run() {
+          val context = reactApplicationContext
+          if (Settings.canDrawOverlays(context)) {
+            pollHandler.removeCallbacksAndMessages(null)
+            bringAppToFront(context)
+            return
+          }
+          attempts++
+          if (attempts >= MAX_GRANT_POLLS) {
+            pollHandler.removeCallbacksAndMessages(null)
+            return
+          }
+          pollHandler.postDelayed(this, GRANT_POLL_INTERVAL_MS)
+        }
+      },
+    )
+  }
+
+  private fun bringAppToFront(context: Context) {
+    val intent = Intent(context, MainActivity::class.java).apply {
+      flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+    }
+    // Background activity launches are allowed here because the overlay
+    // permission (which was just granted) exempts the app from that
+    // restriction.
+    runCatching { context.startActivity(intent) }
   }
 
   companion object {
     const val NAME = "YoinkOverlay"
+    const val GRANT_POLL_INTERVAL_MS = 700L
+    const val MAX_GRANT_POLLS = 240 // ~3 minutes before giving up
+    val pollHandler = Handler(Looper.getMainLooper())
   }
 }

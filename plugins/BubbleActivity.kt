@@ -25,6 +25,9 @@ class BubbleActivity : Activity() {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+    // No activity open animation - the window is invisible and any transition
+    // would flash black over the app the user is in.
+    overridePendingTransition(0, 0)
     // Keep the transparent window truly invisible (no default theme flash).
     window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
 
@@ -34,7 +37,7 @@ class BubbleActivity : Activity() {
         if (!handled) {
           handled = true
           handleClipboard()
-          finish()
+          finishQuietly()
         }
       },
       FALLBACK_MS,
@@ -48,9 +51,14 @@ class BubbleActivity : Activity() {
       handled = true
       Handler(Looper.getMainLooper()).post {
         handleClipboard()
-        finish()
+        finishQuietly()
       }
     }
+  }
+
+  private fun finishQuietly() {
+    overridePendingTransition(0, 0)
+    finish()
   }
 
   private fun handleClipboard() {

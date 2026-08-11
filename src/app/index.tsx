@@ -40,7 +40,7 @@ import { WelcomeSlide } from "@/features/onboarding/components/WelcomeSlide";
 import { PRIMARY } from "@/lib/colors";
 import {
   hasOverlayPermission,
-  openOverlayPermissionSettings,
+  requestOverlayPermission,
   startFloatingBubble,
 } from "@/services/FloatingBubble";
 import { configureNotifications } from "@/services/Notifications";
@@ -321,7 +321,7 @@ const OnboardingScreen: React.FC = () => {
         permissionLockRef.current = null;
         setPermissions((prev) => ({ ...prev, bubble: granted }));
         if (!granted) {
-          openOverlayPermissionSettings();
+          requestOverlayPermission();
           return;
         }
       }

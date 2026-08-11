@@ -8,7 +8,7 @@ import {
   hasOverlayPermission,
   isBubbleActive,
   isFloatingBubbleSupported,
-  openOverlayPermissionSettings,
+  requestOverlayPermission,
   startFloatingBubble,
   stopFloatingBubble,
 } from "@/services/FloatingBubble";
@@ -43,7 +43,7 @@ export const FloatingBubbleCard: React.FC = () => {
       const granted = await hasOverlayPermission();
       if (!granted) {
         setPermissionGranted(false);
-        openOverlayPermissionSettings();
+        requestOverlayPermission();
         return;
       }
       setPermissionGranted(true);
