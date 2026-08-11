@@ -3,7 +3,7 @@ import { IconCheck } from "tabler-icons-react-native";
 import { Icon } from "@/components/ui/icon";
 import { Text } from "@/components/ui/text";
 
-export type PermissionSlideType = "notifications" | "gallery";
+export type PermissionSlideType = "notifications" | "gallery" | "bubble";
 
 const PERMISSION_CONTENT: Record<
   PermissionSlideType,
@@ -19,6 +19,12 @@ const PERMISSION_CONTENT: Record<
     why: "Gallery access lets Yoink save downloads to the Yoink album so they show up in your gallery and WhatsApp's media picker.",
     without: "Without it, downloads can't be saved to your gallery.",
     grantedLabel: "Gallery access granted",
+  },
+  bubble: {
+    why: "A floating Yoink bubble appears over TikTok and other apps. Copy a link inside TikTok, then tap the bubble to download it without leaving the app.",
+    without:
+      "Without it, you'll download by sharing links into Yoink or pasting them on the home screen.",
+    grantedLabel: "Floating bubble enabled",
   },
 };
 
